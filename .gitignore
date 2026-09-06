@@ -1,0 +1,26 @@
+# Log files
+logs/
+
+# IDE files
+.idea/
+*.iml
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+env/
+
+# Sensitive files
+.env
+*.env
+secrets/
+tokens/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.gitignore
