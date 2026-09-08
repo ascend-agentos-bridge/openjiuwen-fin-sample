@@ -1,5 +1,9 @@
 # Log files
 logs/
+out.log
+srv_test.log
+*.stackdump
+None/
 
 # IDE files
 .idea/
