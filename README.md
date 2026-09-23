@@ -1,6 +1,6 @@
 # openjiuwen-sample：Agent 业务开发样例（银行信贷场景）
 
-做业务系统的人想给信贷、风控、客服这类系统加 Agent 功能（自动查档、跑审批、生成意见、多轮对话）时，可以照这个仓库的样例写。18 个样例都用开源 openjiuwen Agent Core 的官方 API 写成，当前适配 `openjiuwen==0.1.16`。一个特性一个文件夹，`main.py` 直接能跑，配套 README 写清楚运行前提、代码讲解、验收方式和实测输出。
+做业务系统的人想给信贷、风控、客服这类系统加 Agent 功能（自动查档、跑审批、生成意见、多轮对话）时，可以照这个仓库的样例写。19 个样例都用开源 openjiuwen Agent Core 的官方 API 写成，当前适配 `openjiuwen==0.1.16`。一个特性一个文件夹，`main.py` 直接能跑，配套 README 写清楚运行前提、代码讲解、验收方式和实测输出。
 
 样例只 import 官方包，仓库里没有自封装的第二套 API。觉得框架接口不好用，按 [AGENTS.md](AGENTS.md) 的约定去 agent-core 仓库提 Issue / PR，把改进做进框架本体。
 
@@ -61,6 +61,7 @@ python main.py
 | [16 a2a_interop](samples/16_a2a_interop/) | 本行 Agent 直接咨询征信中心那套系统的 Agent | A2A 跨机构互操作 |
 | [17 evaluation_optimizer](samples/17_evaluation_optimizer/) | 让 LLM 当裁判，按规则给 Agent 的回答打分 | LLM-as-Judge 评测 |
 | [18 mcp_tools](samples/18_mcp_tools/) | 信贷工具封装成标准 MCP 服务，其他进程也能调 | MCP 工具协议 |
+| [19 skill_use](samples/19_skill_use/) | 贷前审查规范写成 SKILL.md，Agent 按需读取技能并遵循执行 | Agent Skill：注册技能 + 提示注入 + 按需装载 |
 
 每个样例目录的 README 都含：场景说明、代码讲解、运行与验收方式、实测输出、注意点。其中“注意点”记的是真实踩过的坑（返回值形态、默认超时这类），换模型、升版本前值得先看。
 
@@ -93,7 +94,7 @@ harness 级的 DeepAgent、RL 训练这类能力没有放进样例。openjiuwen 
 ```text
 openjiuwen-sample/
 ├── samples/
-│   └── NN_name/            18 个样例，一特性一文件夹
+│   └── NN_name/            19 个样例，一特性一文件夹
 │       ├── main.py         可运行，自带断言
 │       └── README.md       场景 / 代码讲解 / 运行 / 验收 / 实测输出 / 注意点
 ├── run_all_samples.py      一键回归

@@ -32,7 +32,7 @@
 | §6.3 Tool Authentication | ✅ 已验证 | 样例 02。凭证注入不进 schema、掩码日志 |
 | §6.4 Service API Tool | ✅ 已验证 | 样例 02。HTTP API 一行包装（本地服务实测） |
 | §6.5 MCP | ✅ 已验证（最小子集） | 样例 18。stdio + initialize/tools/list/tools/call 对齐官方语义；**SSE/HTTP 传输、资源订阅没有** |
-| §7.1 Agent Skill | ⚠️ 名实不符 | 没有 Skill 类/API。真实形态=带专属工具与系统提示的 Agent（样例 12 专家），或 MCP 工具包。建议清单改口径 |
+| §7.1 Agent Skill | ✅ 已验证 | 样例 19。`agent.register_skill` 注册 SKILL.md 技能目录，运行时框架把技能清单注入系统提示，模型用 `read_file` 按需读取正文并遵循。此前本表记为"没有 Skill API"系校验遗漏（0.1.16 发布包已含 `core/single_agent/skills` 模块），已修正 |
 | §7.2 Skill Evolution | 🔮 幻觉/纯展望 | 没有任何"Skill 在线演进"API。样例 17 的 prompt 择优是最接近的可用闭环，但不是 Skill 演进 |
 | §7.3 Swarm/Team Skill | 🔮 幻觉 | 无 API。团队协作由 AgentAsTool+Team 实现（样例 12），与"Skill"无关 |
 | §8.1 Knowledge Base | ⚠️ 半真 | 有向量库+检索器（样例 11），但**没有"知识库"产品化 API**（导入管道、索引管理） |
@@ -75,7 +75,7 @@
 3. **Pregel / Stream Actor / Graph Store（§14）**——图执行层的学术名词堆叠，开发者拿不到任何 API；
 4. **Reward / RL Trainer（§17.6）**——训练侧能力被画进开发者闭环图；
 5. **IntelliRouter（§21）**——纯设想，连代码影子都没有；
-6. **Skill Evolution / Swarm Skill（§7.2/7.3）**——"Skill"这个概念本身在 core 里没有 API 载体。
+6. **Skill Evolution / Swarm Skill（§7.2/7.3）**——仍然没有 API。更正：§7.1 Agent Skill 本体是真实存在的（`agent.register_skill`，样例 19），此前"Skill 没有 API 载体"的结论系校验遗漏，已修正；但"技能在线演进/群体技能"至今无 API。
 
 **共同模式**：清单把"源码目录命名"和"产品愿景"误读为"开发者可用能力"。建议所有特性描述都附上"入口 API + 可运行示例"链接，没有链接的移入 Roadmap 章节。
 
@@ -98,8 +98,8 @@
 
 清单 28 节中：
 
-- **✅ 已验证可用**：22 项核心能力（覆盖 Agent/Workflow/LLM/Prompt/Tool/Memory/Context/RAG/Multi-Agent/Runtime/Security/SysOps/Evaluation/A2A/MCP），本工程 18 个样例全部可复现验收；
-- **⚠️ 名实不符**：8 项（描述夸大或概念错位，需改口径）；
+- **✅ 已验证可用**：23 项核心能力（覆盖 Agent/Workflow/LLM/Prompt/Tool/Skill/Memory/Context/RAG/Multi-Agent/Runtime/Security/SysOps/Evaluation/A2A/MCP），本工程 19 个样例全部可复现验收；
+- **⚠️ 名实不符**：7 项（描述夸大或概念错位，需改口径）；
 - **🔮 幻觉/纯展望**：9 项（目录命名或愿景被当成能力，应移入 Roadmap）；
 - **➕ 已补充**：10 项开发者刚需经验（清单完全没有提及）。
 
