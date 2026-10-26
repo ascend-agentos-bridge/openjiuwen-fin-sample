@@ -69,16 +69,36 @@ python3 run_all_samples.py 21
 
 ## 实测输出
 
-2026-10-26 在本机 LM Studio、`google/gemma-4-e4b`、Java SDK `0.1.16` 上真实运行。完整日志见 [`run_output.txt`](run_output.txt)；以下摘录保留实际链路 ID 和调用关系。每次运行的 ID、措辞和耗时会变化。
+2026-10-26 在本机 LM Studio、`google/gemma-4-e4b`、Java SDK `0.1.16` 上真实运行。下面完整展示本次 `logs/call_trace.log` 的输出，包含配置、调用开始/完成、最终回答和验收结果；同一份日志也保存为 [`run_output.txt`](run_output.txt)。每次运行的 ID、措辞和耗时会变化。
+
+### call_trace.log 输出数据样例
 
 ```text
+2026-10-26 15:28:38.011 INFO  sample.call_trace - CONFIG: agent-core-java=0.1.16 model=google/gemma-4-e4b apiBase=http://127.0.0.1:1234/v1
+2026-10-26 15:28:38.205 INFO  sample.call_trace - TRACE traceId=e1efd974-07ca-470e-8c5c-62523d8e59ce invokeId=55efa16b-4dff-40f4-bb15-4e13c947b79f parentInvokeId=null type=chain name=credit_trace_agent status=start elapsed=null
+2026-10-26 15:28:40.128 INFO  sample.call_trace - TRACE traceId=e1efd974-07ca-470e-8c5c-62523d8e59ce invokeId=d64584e9-3d87-4f5e-b47c-9cc67671ab87 parentInvokeId=55efa16b-4dff-40f4-bb15-4e13c947b79f type=llm name=google/gemma-4-e4b status=start elapsed=null
 2026-10-26 15:28:50.886 INFO  sample.call_trace - TRACE traceId=e1efd974-07ca-470e-8c5c-62523d8e59ce invokeId=d64584e9-3d87-4f5e-b47c-9cc67671ab87 parentInvokeId=55efa16b-4dff-40f4-bb15-4e13c947b79f type=llm name=google/gemma-4-e4b status=finish elapsed=12.68s
+2026-10-26 15:28:50.888 INFO  sample.call_trace - TRACE traceId=e1efd974-07ca-470e-8c5c-62523d8e59ce invokeId=43cc109e-2a54-4163-8cba-8ea9c39c04bd parentInvokeId=55efa16b-4dff-40f4-bb15-4e13c947b79f type=plugin name=query_credit_report status=start elapsed=null
 2026-10-26 15:28:50.890 INFO  sample.call_trace - TRACE traceId=e1efd974-07ca-470e-8c5c-62523d8e59ce invokeId=43cc109e-2a54-4163-8cba-8ea9c39c04bd parentInvokeId=55efa16b-4dff-40f4-bb15-4e13c947b79f type=plugin name=query_credit_report status=finish elapsed=1ms
+2026-10-26 15:28:51.988 INFO  sample.call_trace - TRACE traceId=e1efd974-07ca-470e-8c5c-62523d8e59ce invokeId=eb006fd2-9b08-4748-9698-d135fdb00e7f parentInvokeId=55efa16b-4dff-40f4-bb15-4e13c947b79f type=llm name=google/gemma-4-e4b status=start elapsed=null
 2026-10-26 15:28:52.893 INFO  sample.call_trace - TRACE traceId=e1efd974-07ca-470e-8c5c-62523d8e59ce invokeId=eb006fd2-9b08-4748-9698-d135fdb00e7f parentInvokeId=55efa16b-4dff-40f4-bb15-4e13c947b79f type=llm name=google/gemma-4-e4b status=finish elapsed=2.00s
 2026-10-26 15:28:52.893 INFO  sample.call_trace - TRACE traceId=e1efd974-07ca-470e-8c5c-62523d8e59ce invokeId=55efa16b-4dff-40f4-bb15-4e13c947b79f parentInvokeId=null type=chain name=credit_trace_agent status=finish elapsed=14.79s
 2026-10-26 15:28:52.895 INFO  sample.call_trace - RESULT: {outputs={output=报告编号：CR-74305066，客户编号：C1001，信用评分：735。, result_type=answer}}
 2026-10-26 15:28:52.896 INFO  sample.call_trace - SUCCESS: Java 调用链验收通过，4 个 span，Agent → LLM → 征信工具 → LLM → 回答，日志位于 logs/call_trace.log
 ```
+
+这次执行产生 8 条 TRACE 事件，对应 4 次调用：1 个 Agent、2 次 LLM、1 次征信工具调用。每次调用都有 `start` 和 `finish` 两条事件，使用同一个 `invokeId`。
+
+| 日志字段 | 含义与本例读法 |
+|---|---|
+| `traceId` | 整次请求的链路 ID；上面 8 条 TRACE 事件都属于同一条链路 |
+| `invokeId` | 单次调用的 ID，用于匹配该调用的开始与完成事件 |
+| `parentInvokeId` | 父调用 ID；Agent 根调用为 `null`，两次 LLM 和征信工具均指向该 Agent 的 `invokeId` |
+| `type` / `name` | 调用类型和名称：`chain` / `credit_trace_agent`、`llm` / `google/gemma-4-e4b`、`plugin` / `query_credit_report` |
+| `status` | `start` 为调用开始，`finish` 为成功完成；异常路径会输出 `error` |
+| `elapsed` | 框架记录的调用耗时；开始时为 `null`，本次 Agent 总耗时为 `14.79s` |
+| `RESULT` | 最终业务回答，包含工具返回的报告编号 `CR-74305066`、客户编号 `C1001` 和评分 `735` |
+| `SUCCESS` | sample 的验收结果；本次 4 个 span 的状态、父子关系和日志落盘均通过检查 |
 
 统一回归实测：
 
