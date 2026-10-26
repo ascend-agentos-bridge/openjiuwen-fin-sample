@@ -24,4 +24,4 @@ Python 样例 01–19 适配 `openjiuwen==0.1.16`；Java 样例 20–21 适配 `
 | MCP 工具协议 | [18 mcp_tools](samples/18_mcp_tools/) |
 | Agent Skill 注册与加载 | [19 skill_use](samples/19_skill_use/) |
 | Java 层级式 Agent-as-Tool：Master → SubAgent → SubAgent | [20 java_nested_agents](samples/20_java_nested_agents/) |
-| Java 调用链日志：OtelRail、TRACE 事件、父子 span、状态和耗时 | [21 java_call_trace](samples/21_java_call_trace/) |
+| Java 完整调用链日志：OtelRail、输入输出、用量、错误、配置指纹与 JSONL | [21 java_call_trace](samples/21_java_call_trace/) |

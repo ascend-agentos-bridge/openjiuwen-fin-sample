@@ -63,13 +63,13 @@ python main.py
 | [18 mcp_tools](samples/18_mcp_tools/) | 信贷工具封装成标准 MCP 服务，其他进程也能调 | MCP 工具协议 |
 | [19 skill_use](samples/19_skill_use/) | 贷前审查规范写成 SKILL.md，Agent 按需读取技能并遵循执行 | Agent Skill：注册技能 + 提示注入 + 按需装载 |
 | [20 java_nested_agents](samples/20_java_nested_agents/) | 审批主管委派风控专员，风控专员再委派征信核验员，逐级返回 | Java HierarchicalToolsTeam：三层子智能体委派 |
-| [21 java_call_trace](samples/21_java_call_trace/) | 查询客户征信，输出 Agent、模型、工具的调用轨迹与耗时 | Java OtelRail + TRACE 事件：控制台与文件日志 |
+| [21 java_call_trace](samples/21_java_call_trace/) | 查询客户征信，输出模型消息、工具参数与结果、用量、错误和调用轨迹 | Java OtelRail + TRACE 事件：完整日志与 JSONL |
 
 每个样例目录的 README 都含：场景说明、代码讲解、运行与验收方式、实测输出、注意点。其中“注意点”记的是真实踩过的坑（返回值形态、默认超时这类），换模型、升版本前值得先看。
 
 样例 20 需要 **JDK 17+、Maven 3.9+**；Java 源文件为 `src/main/java/CreditNestedAgents.java`，`main.py` 仅用于回归启动。模型配置沿用 `API_BASE` / `API_KEY` / `MODEL_NAME` / `MODEL_PROVIDER`；该样例默认模型为本机检测到的 `google/gemma-4-e4b`。可在样例目录运行 `mvn -q compile exec:java`，或在根目录运行 `python run_all_samples.py 20`；Maven 不在 PATH 时可通过 `MAVEN_CMD` 指定其可执行文件。
 
-样例 21 使用同样的 JDK / Maven 环境，默认通过 OpenAI 兼容接口连接本地 LM Studio 的 `google/gemma-4-e4b`，支持 `API_BASE` / `API_KEY` / `MODEL_NAME`。在根目录运行 `python run_all_samples.py 21`，轨迹写入 `samples/21_java_call_trace/logs/call_trace.log`；日志包含统一的 `traceId`、调用及父调用 ID、类型、状态和耗时，无需安装链路追踪服务。
+样例 21 使用同样的 JDK / Maven 环境，默认通过 OpenAI 兼容接口连接本地 LM Studio 的 `google/gemma-4-e4b`，支持 `API_BASE` / `API_KEY` / `MODEL_NAME`。在根目录运行 `python run_all_samples.py 21`，轨迹写入 `samples/21_java_call_trace/logs/call_trace.log` 和 `call_trace.jsonl`；包括完整官方 span、模型消息与用量、工具参数与结果、错误、运行配置和提示/工具/源码指纹，便于后续分析并关联反馈。日志不需要修改框架或安装链路追踪服务。
 
 ## 全量回归
 
@@ -88,7 +88,7 @@ python run_all_samples.py 01 06    # 只跑指定编号
 
 ## 验收口径
 
-- Python 样例的 `main.py` 自带断言，Java 样例在 Java 入口内检查调用轨迹并由启动器传递退出码；通过时打印 `SUCCESS:`，退出码非 0 即失败；
+- Python 样例的 `main.py` 自带断言，Java 样例在 Java 入口内检查调用轨迹并由启动器传递退出码；通过时输出 `SUCCESS` 标记，退出码非 0 即失败；
 - 各 README 的“实测输出”来自真实运行，不是手写效果图（本地网关实测过 qwen3-4b-thinking、qwen3.5-9b、gemma-4-e2b，各样例 README 标注自己用的模型）；
 - LLM 输出有随机性，断言只锚结构性事实：工具是否被调用、状态机走向、分数区间，不断言具体措辞；
 - 升级 openjiuwen 或换模型后跑一遍回归，把受影响样例的实测输出同步更新。

@@ -5,6 +5,8 @@ import shutil
 import subprocess
 import sys
 
+from verify_logs import verify
+
 
 def main() -> int:
     maven = os.getenv("MAVEN_CMD", "mvn")
@@ -12,11 +14,14 @@ def main() -> int:
         print("需要 Java 17+ 和 Maven 3.9+；将 mvn 加入 PATH，或设置 MAVEN_CMD。", file=sys.stderr)
         return 1
     try:
-        return subprocess.call(
+        result = subprocess.call(
             [maven, "-q", "--batch-mode", "compile", "exec:java"],
             cwd=Path(__file__).resolve().parent,
             timeout=300,
         )
+        if result == 0:
+            verify(Path(__file__).parent / "logs")
+        return result
     except subprocess.TimeoutExpired:
         print("Java sample 超过 300 秒仍未完成，请检查 Maven 下载和 LM Studio 服务。", file=sys.stderr)
         return 1
