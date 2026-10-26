@@ -1,6 +1,6 @@
 # openjiuwen-sample：Agent 业务开发样例（银行信贷场景）
 
-做业务系统的人想给信贷、风控、客服这类系统加 Agent 功能（自动查档、跑审批、生成意见、多轮对话）时，可以照这个仓库的样例写。19 个 Python 样例使用开源 openjiuwen Agent Core 官方 API，适配 `openjiuwen==0.1.16`；另有 2 个 Java 样例，演示三层子智能体委派和调用链日志，适配 `com.openjiuwen:agent-core-java:0.1.16`。一个特性一个文件夹，配套 README 写清楚运行前提、代码讲解、验收方式和实测输出。完整索引见 [FEATURES.md](FEATURES.md)。
+做业务系统的人想给信贷、风控、客服这类系统加 Agent 功能（自动查档、跑审批、生成意见、多轮对话）时，可以照这个仓库的样例写。19 个 Python 样例使用开源 openjiuwen Agent Core 官方 API，适配 `openjiuwen==0.1.16`；另有 3 个 Java 样例，演示三层子智能体委派、完整调用链日志和 Langfuse 对接，适配 `com.openjiuwen:agent-core-java:0.1.16`。一个特性一个文件夹，配套 README 写清楚运行前提、代码讲解、验收方式和实测输出。完整索引见 [FEATURES.md](FEATURES.md)。
 
 样例只 import 官方包，仓库里没有自封装的第二套 API。觉得框架接口不好用，按 [AGENTS.md](AGENTS.md) 的约定去 agent-core 仓库提 Issue / PR，把改进做进框架本体。
 
@@ -64,12 +64,15 @@ python main.py
 | [19 skill_use](samples/19_skill_use/) | 贷前审查规范写成 SKILL.md，Agent 按需读取技能并遵循执行 | Agent Skill：注册技能 + 提示注入 + 按需装载 |
 | [20 java_nested_agents](samples/20_java_nested_agents/) | 审批主管委派风控专员，风控专员再委派征信核验员，逐级返回 | Java HierarchicalToolsTeam：三层子智能体委派 |
 | [21 java_call_trace](samples/21_java_call_trace/) | 查询客户征信，输出模型消息、工具参数与结果、用量、错误和调用轨迹 | Java OtelRail + TRACE 事件：完整日志与 JSONL |
+| [22 java_langfuse](samples/22_java_langfuse/) | 将征信核验的 Agent、模型和工具轨迹导出到 Langfuse | Java 官方 OTel handler + OTLP/HTTP，含本地导出验收 |
 
 每个样例目录的 README 都含：场景说明、代码讲解、运行与验收方式、实测输出、注意点。其中“注意点”记的是真实踩过的坑（返回值形态、默认超时这类），换模型、升版本前值得先看。
 
 样例 20 需要 **JDK 17+、Maven 3.9+**；Java 源文件为 `src/main/java/CreditNestedAgents.java`，`main.py` 仅用于回归启动。模型配置沿用 `API_BASE` / `API_KEY` / `MODEL_NAME` / `MODEL_PROVIDER`；该样例默认模型为本机检测到的 `google/gemma-4-e4b`。可在样例目录运行 `mvn -q compile exec:java`，或在根目录运行 `python run_all_samples.py 20`；Maven 不在 PATH 时可通过 `MAVEN_CMD` 指定其可执行文件。
 
 样例 21 使用同样的 JDK / Maven 环境，默认通过 OpenAI 兼容接口连接本地 LM Studio 的 `google/gemma-4-e4b`，支持 `API_BASE` / `API_KEY` / `MODEL_NAME`。在根目录运行 `python run_all_samples.py 21`，轨迹写入 `samples/21_java_call_trace/logs/call_trace.log` 和 `call_trace.jsonl`；包括完整官方 span、模型消息与用量、工具参数与结果、错误、运行配置和提示/工具/源码指纹，便于后续分析并关联反馈。日志不需要修改框架或安装链路追踪服务。
+
+样例 22 使用相同的 JDK / Maven 和本地模型配置，另需 `LANGFUSE_BASE_URL`、`LANGFUSE_PUBLIC_KEY`、`LANGFUSE_SECRET_KEY`。无 Langfuse 实例时，安装该样例 `requirements-local.txt` 后运行 `LANGFUSE_LOCAL_TEST=1 python3 run_all_samples.py 22`，验证真实模型调用和本地 OTLP 导出。本轮未验证真实 Langfuse 平台接收，详见样例 README。
 
 ## 全量回归
 
@@ -82,7 +85,7 @@ python run_all_samples.py 01 06    # 只跑指定编号
 
 跑全部样例前，把剩余依赖装齐：`pip install chromadb mcp "openjiuwen[a2a]"`，分别供 09/11 的向量库、18 的 MCP 服务端、16 的 A2A 使用。
 
-包含样例 20 / 21 的全量回归还需要上述 JDK / Maven 环境，首次执行会下载 Java SDK 及其传递依赖。
+包含样例 20 / 21 / 22 的全量回归还需要上述 JDK / Maven 环境，首次执行会下载 Java SDK 及其传递依赖。
 
 本地 CPU 推理下全量一次约 25~40 分钟，生产/CI 里建议接云端网关。
 
@@ -102,8 +105,8 @@ harness 级的 DeepAgent、RL 训练这类能力没有放进样例。Java 三层
 ```text
 openjiuwen-sample/
 ├── samples/
-│   └── NN_name/            21 个样例，一特性一文件夹
-│       ├── main.py         Python 样例入口；20 / 21 为 Java 启动器
+│   └── NN_name/            22 个样例，一特性一文件夹
+│       ├── main.py         Python 样例入口；20 / 21 / 22 为 Java 启动器
 │       └── README.md       场景 / 代码讲解 / 运行 / 验收 / 实测输出 / 注意点
 ├── FEATURES.md            Python / Java 特性索引
 ├── run_all_samples.py      一键回归

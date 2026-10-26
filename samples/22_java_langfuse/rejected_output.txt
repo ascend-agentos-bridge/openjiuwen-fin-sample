@@ -1,0 +1,12 @@
+CONFIG: sdk=0.1.16 model=google/gemma-4-e4b endpoint=http://127.0.0.1:62759/api/public/otel/v1/traces
+RESULT: {"output":"客户 C1001 的征信报告编号为 CR-75a7211c，客户编号为 C1001，评分是 735。请注意，本数据为演示档案，不构成实际放款承诺。","result_type":"answer"}
+OTEL_TRACE_ID: ac32070cc0a1ee9623c6c9095feec4cd spans=4
+[ERROR] Failed to execute goal org.codehaus.mojo:exec-maven-plugin:3.5.0:java (default-cli) on project credit-langfuse: An exception occurred while executing the Java class. OTLP/HTTP 导出失败或超时，请检查 Langfuse 地址、项目密钥和接收端日志 -> [Help 1]
+[ERROR]
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR]
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException
+10月 26, 2026 7:54:31 下午 io.opentelemetry.sdk.common.internal.ThrottlingLogger doLog
+警告: Failed to export spans. Server responded with HTTP status code 401. Error message:

@@ -1,0 +1,2 @@
+# 仅本地 OTLP/HTTP 收包验证需要；连接真实 Langfuse 不需要 Python 遥测依赖。
+opentelemetry-proto==1.45.1
