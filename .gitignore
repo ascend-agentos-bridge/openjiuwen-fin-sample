@@ -30,3 +30,7 @@ Thumbs.db
 .gitignore
 # uv
 .venv/
+
+# Java sample build outputs and local validation runtime
+target/
+.cache/
