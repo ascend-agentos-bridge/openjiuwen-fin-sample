@@ -1,0 +1,51 @@
+[ {
+  "concurrency" : 1,
+  "summary" : {
+    "requests" : 6,
+    "succeeded" : 6,
+    "correct" : 6,
+    "wallSeconds" : 84.674357083,
+    "meanMs" : 14111.559742833333,
+    "p50Ms" : 14058.7785,
+    "p95Ms" : null,
+    "p99Ms" : null,
+    "firstContentP50Ms" : 14007.515625,
+    "requestsPerSecond" : 0.07085970542555929,
+    "modelCalls" : 6,
+    "toolCalls" : 0,
+    "modelMeanMs" : 14111.5102915,
+    "usageKnown" : 6,
+    "inputTokens" : 9492,
+    "outputTokens" : 1266,
+    "outputTokensPerSecond" : 14.95139784479301,
+    "cacheKnown" : 0,
+    "cachedTokenRatio" : null
+  },
+  "group" : "normal",
+  "workload" : "model"
+}, {
+  "concurrency" : 1,
+  "summary" : {
+    "requests" : 6,
+    "succeeded" : 6,
+    "correct" : 6,
+    "wallSeconds" : 87.30265004200001,
+    "meanMs" : 14549.719014166665,
+    "p50Ms" : 14110.733917,
+    "p95Ms" : null,
+    "p99Ms" : null,
+    "firstContentP50Ms" : 14053.790209,
+    "requestsPerSecond" : 0.06872643610604591,
+    "modelCalls" : 12,
+    "toolCalls" : 6,
+    "modelMeanMs" : 14540.093722166668,
+    "usageKnown" : 6,
+    "inputTokens" : 30918,
+    "outputTokens" : 778,
+    "outputTokensPerSecond" : 8.91152788175062,
+    "cacheKnown" : 0,
+    "cachedTokenRatio" : null
+  },
+  "group" : "normal",
+  "workload" : "agent"
+} ]

@@ -1,0 +1,8 @@
+<configuration>
+  <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
+    <target>System.err</target>
+    <encoder><pattern>%date{HH:mm:ss} %-5level %logger{36} - %msg%n</pattern></encoder>
+  </appender>
+  <logger name="com.openjiuwen.core.foundation.llm.model_clients.InferenceAffinityModelClient" level="INFO"/>
+  <root level="WARN"><appender-ref ref="STDERR"/></root>
+</configuration>

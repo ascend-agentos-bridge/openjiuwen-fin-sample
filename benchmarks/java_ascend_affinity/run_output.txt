@@ -1,0 +1,5 @@
+normal/model c=1 repeat=1 success=3/3 wall=42.479s
+normal/model c=1 repeat=2 success=3/3 wall=42.195s
+normal/agent c=1 repeat=1 success=3/3 wall=42.587s
+normal/agent c=1 repeat=2 success=3/3 wall=44.716s
+结论: 真实调用及业务校验通过；昇腾亲和效果未验证。报告: /Users/tianxiaoliang/codespace/openjiuwen-fin-sample/benchmarks/java_ascend_affinity/reports/2026-10-27-normal/report.md

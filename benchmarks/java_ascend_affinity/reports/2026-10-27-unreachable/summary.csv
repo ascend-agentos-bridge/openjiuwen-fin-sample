@@ -1,0 +1,2 @@
+group,workload,concurrency,requests,succeeded,correct,wall_seconds,mean_ms,p50_ms,p95_ms,p99_ms,first_content_p50_ms,successful_requests_per_second,model_calls,tool_calls,model_ms_per_round,usage_known,input_tokens,output_tokens,output_tokens_per_second,cache_known,cached_token_ratio
+normal,model,1,1,0,0,0.267,N/A,N/A,N/A,N/A,N/A,0.000,1,0,N/A,0,N/A,N/A,N/A,0,N/A

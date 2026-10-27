@@ -1,0 +1,10 @@
+15:37:39 WARN  c.o.c.f.l.m.OpenAiCompatibleModelClient - Evicted OkHttp connection pool after connect failure: java.net.ConnectException: Failed to connect to /127.0.0.1:1
+normal/model c=1 repeat=1 success=0/1 wall=0.267s
+结论: 存在调用、预热或业务校验失败；昇腾亲和效果未验证。报告: /Users/tianxiaoliang/codespace/openjiuwen-fin-sample/benchmarks/java_ascend_affinity/reports/2026-10-27-unreachable/report.md
+[ERROR] Failed to execute goal org.codehaus.mojo:exec-maven-plugin:3.5.0:java (default-cli) on project java-ascend-affinity-benchmark: An exception occurred while executing the Java class. benchmark 失败，已生成报告，状态=2 -> [Help 1]
+[ERROR]
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR]
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException

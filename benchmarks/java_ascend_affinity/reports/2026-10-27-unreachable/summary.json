@@ -1,0 +1,26 @@
+[ {
+  "workload" : "model",
+  "group" : "normal",
+  "summary" : {
+    "requests" : 1,
+    "succeeded" : 0,
+    "correct" : 0,
+    "wallSeconds" : 0.267289375,
+    "meanMs" : null,
+    "p50Ms" : null,
+    "p95Ms" : null,
+    "p99Ms" : null,
+    "firstContentP50Ms" : null,
+    "requestsPerSecond" : 0.0,
+    "modelCalls" : 1,
+    "toolCalls" : 0,
+    "modelMeanMs" : null,
+    "usageKnown" : 0,
+    "inputTokens" : null,
+    "outputTokens" : null,
+    "outputTokensPerSecond" : null,
+    "cacheKnown" : 0,
+    "cachedTokenRatio" : null
+  },
+  "concurrency" : 1
+} ]

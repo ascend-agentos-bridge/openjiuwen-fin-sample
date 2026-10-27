@@ -1,6 +1,6 @@
 # Agent Core 开发者特性与样例索引
 
-Python 样例 01–19 适配 `openjiuwen==0.1.16`；Java 样例 20–23 适配 `com.openjiuwen:agent-core-java:0.1.16`。本表列出现有样例覆盖的特性，未覆盖能力见根 README 与历史核验记录，不将未运行的能力标为已验收。
+Python 样例 01–19 适配 `openjiuwen==0.1.16`；Java 样例 20–24 适配 `com.openjiuwen:agent-core-java:0.1.16`。本表列出现有样例覆盖的特性，未覆盖能力见根 README 与历史核验记录，不将未运行的能力标为已验收。
 
 | 特性 | 样例 |
 |---|---|
@@ -27,3 +27,6 @@ Python 样例 01–19 适配 `openjiuwen==0.1.16`；Java 样例 20–23 适配 `
 | Java 完整调用链日志：OtelRail、输入输出、用量、错误、配置指纹与 JSONL | [21 java_call_trace](samples/21_java_call_trace/) |
 | Java Langfuse 对接：官方 OTel handler、OTLP/HTTP、Langfuse 属性映射；本地导出已验收 | [22 java_langfuse](samples/22_java_langfuse/) |
 | Java 自定义工具业务校验、审批中断恢复与异常重试；JUnit 独立验收 | [23 java_tool_rails](samples/23_java_tool_rails/) |
+| Java KV Cache 亲和开关、上下文压缩；普通模型流程验收，昇腾效果未验证 | [24 java_ascend_affinity](samples/24_java_ascend_affinity/) |
+
+性能实验工具：[Java 算力亲和 benchmark](benchmarks/java_ascend_affinity/README.md)，自动生成客户端指标、服务端指标获取位置及结论报告。
