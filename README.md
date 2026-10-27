@@ -4,7 +4,14 @@
 
 样例只 import 官方包，仓库里没有自封装的第二套 API。觉得框架接口不好用，按 [AGENTS.md](AGENTS.md) 的约定去 agent-core 仓库提 Issue / PR，把改进做进框架本体。
 
-## 快速开始：先跑通 01
+| SDK 版本 | 样例范围 | 依赖与入口 | 开发指南 |
+|---|---|---|---|
+| Python 版 Agent Core | 01–19 | `openjiuwen==0.1.16`，`main.py` | 本文下方的 Python 说明 |
+| Java 版 Agent Core | 20–23 | `com.openjiuwen:agent-core-java:0.1.16`，Java `main` / Maven | [Java 版 README](README-JAVA.md) |
+
+两套 SDK 的项目结构和 API 分别以对应语言的官方示例为准。Java 开发者从 [Java 指南](README-JAVA.md) 的样例 23 开始，无需安装 Python 版 `openjiuwen`。
+
+## Python 版快速开始：先跑通 01
 
 前提就两个：Python 3.11+（在 3.13 实测过），一个 OpenAI 兼容的模型服务。样例默认连本机 LM Studio（`http://127.0.0.1:1234/v1`），最快路径：
 
@@ -25,7 +32,7 @@ export MODEL_NAME="你选的模型"
 python main.py
 ```
 
-环境变量清单（与官方 examples 约定一致，也是所有样例的通用配置入口）：
+以下环境变量默认值适用于 Python 样例；Java 样例的模型默认值和专有配置见 [Java 指南](README-JAVA.md)：
 
 | 变量 | 默认值 | 说明 |
 |---|---|---|
@@ -39,7 +46,9 @@ python main.py
 
 ## 样例一览：按业务场景找
 
-第一次接触不用挑，从 01 顺着往后跑一遍。之后按场景直接查：
+Python 开发从 01 开始，Java 开发从 23 开始，再按对应语言和业务场景选择。
+
+### Python SDK：01–19
 
 | 样例 | 业务场景 | 对应能力 |
 |---|---|---|
@@ -62,6 +71,11 @@ python main.py
 | [17 evaluation_optimizer](samples/17_evaluation_optimizer/) | 让 LLM 当裁判，按规则给 Agent 的回答打分 | LLM-as-Judge 评测 |
 | [18 mcp_tools](samples/18_mcp_tools/) | 信贷工具封装成标准 MCP 服务，其他进程也能调 | MCP 工具协议 |
 | [19 skill_use](samples/19_skill_use/) | 贷前审查规范写成 SKILL.md，Agent 按需读取技能并遵循执行 | Agent Skill：注册技能 + 提示注入 + 按需装载 |
+
+### Java SDK：20–23
+
+| 样例 | 业务场景 | 对应能力 |
+|---|---|---|
 | [20 java_nested_agents](samples/20_java_nested_agents/) | 审批主管委派风控专员，风控专员再委派征信核验员，逐级返回 | Java HierarchicalToolsTeam：三层子智能体委派 |
 | [21 java_call_trace](samples/21_java_call_trace/) | 查询客户征信，输出模型消息、工具参数与结果、用量、错误和调用轨迹 | Java OtelRail + TRACE 事件：完整日志与 JSONL |
 | [22 java_langfuse](samples/22_java_langfuse/) | 将征信核验的 Agent、模型和工具轨迹导出到 Langfuse | Java 官方 OTel handler + OTLP/HTTP，含本地导出验收 |
@@ -69,13 +83,7 @@ python main.py
 
 每个样例目录的 README 都含：场景说明、代码讲解、运行与验收方式、实测输出、注意点。其中“注意点”记的是真实踩过的坑（返回值形态、默认超时这类），换模型、升版本前值得先看。
 
-样例 20 需要 **JDK 17+、Maven 3.9+**；Java 源文件为 `src/main/java/CreditNestedAgents.java`，`main.py` 仅启动业务示例，`test.py` 启动独立的 JUnit 验收。模型配置沿用 `API_BASE` / `API_KEY` / `MODEL_NAME` / `MODEL_PROVIDER`；该样例默认模型为本机检测到的 `google/gemma-4-e4b`。可在样例目录运行 `mvn -q compile exec:java`，或在根目录运行 `python run_all_samples.py 20`；Maven 不在 PATH 时可通过 `MAVEN_CMD` 指定其可执行文件。
-
-样例 21 使用同样的 JDK / Maven 环境，默认通过 OpenAI 兼容接口连接本地 LM Studio 的 `google/gemma-4-e4b`，支持 `API_BASE` / `API_KEY` / `MODEL_NAME`。在根目录运行 `python run_all_samples.py 21`，轨迹写入 `samples/21_java_call_trace/logs/call_trace.log` 和 `call_trace.jsonl`；包括完整官方 span、模型消息与用量、工具参数与结果、错误、运行配置和提示/工具/源码指纹，便于后续分析并关联反馈。日志不需要修改框架或安装链路追踪服务。
-
-样例 22 的业务入口需要 `LANGFUSE_BASE_URL`、`LANGFUSE_PUBLIC_KEY`、`LANGFUSE_SECRET_KEY`，直接使用官方 BatchSpanProcessor 批量导出。单元测试运行 `mvn test`；安装该样例 `requirements-test.txt` 后，`python3 run_all_samples.py 22` 会调用独立 `test.py`，在测试目录启动本地接收器，验证真实模型和 OTLP 导出，不需要真实 Langfuse 实例。平台入库与界面展示仍需配置实例后验证。
-
-样例 23 沿用相同的 JDK / Maven 和模型配置，只有 Java/Maven 入口，没有 Python 启动器。`mvn -q compile exec:java` 只展示业务流程；`mvn test` 运行单元测试，`mvn -Preal-model test` 追加真实模型验收。根目录 `python3 run_all_samples.py 23` 识别 `pom.xml` 后直接调用 Maven，验收断言和观察器均位于 `src/test/java`。
+Java 样例需要 **JDK 17+、Maven 3.9+**。原生入口、Maven 依赖、模型配置、JUnit 验收和 Langfuse 额外前提统一见 [Java 版 README](README-JAVA.md)。
 
 ## 全量回归
 
@@ -88,7 +96,7 @@ python run_all_samples.py 01 06    # 只跑指定编号
 
 跑全部样例前，把剩余依赖装齐：`pip install chromadb mcp "openjiuwen[a2a]"`，分别供 09/11 的向量库、18 的 MCP 服务端、16 的 A2A 使用。
 
-包含样例 20–23 的全量回归还需要上述 JDK / Maven 环境，首次执行会下载 Java SDK 及其传递依赖。
+这些 pip 依赖属于 Python 样例。包含 20–23 的全量回归还需要 JDK / Maven，以及 [Java 指南](README-JAVA.md) 列出的额外验收前提。Java 业务入口和 JUnit 可直接通过 Maven 运行，仓库级 Python 调度脚本是可选入口。
 
 本地 CPU 推理下全量一次约 25~40 分钟，生产/CI 里建议接云端网关。
 
@@ -105,15 +113,38 @@ harness 级的 DeepAgent、RL 训练这类能力没有放进样例。Java 三层
 
 ## 仓库结构
 
+公共文件：
+
 ```text
 openjiuwen-sample/
-├── samples/
-│   └── NN_name/            23 个样例，一特性一文件夹
-│       ├── main.py         Python / 旧样例入口；23 使用 pom.xml 与 Java main
-│       ├── test.py         20–22 独立测试入口
-│       └── README.md       场景 / 代码讲解 / 运行 / 验收 / 实测输出 / 注意点
-├── FEATURES.md            Python / Java 特性索引
-├── run_all_samples.py      一键回归，识别 Maven 项目或旧 Python 入口
+├── README.md               仓库总览与 Python 版说明
+├── README-JAVA.md          Java 版 SDK、运行、验收与目录说明
+├── samples/               Python 01–19、Java 20–23
+├── FEATURES.md            两套 SDK 的样例索引
+├── run_all_samples.py      可选的跨语言回归调度脚本
 ├── docs/checklist-review.md
 └── AGENTS.md               仓库约束：只用官方 API、不本地封装、锁最新 release
 ```
+
+Python 样例结构（01–19）：
+
+```text
+samples/01_hello_react_agent/
+├── main.py                 Python 业务入口
+└── README.md               场景、代码讲解、运行、验收与实测输出
+```
+
+Java 样例结构（以 23 为例）：
+
+```text
+samples/23_java_tool_rails/
+├── pom.xml                 官方 Java SDK 依赖、入口类和测试配置
+├── README.md
+├── src/main/java/          Java main 与业务代码
+├── src/main/resources/     日志等运行资源
+├── src/test/java/          JUnit 单元测试与真实模型验收
+├── run_output.txt          演示实测输出
+└── test_output.txt         验收实测输出
+```
+
+Java 不套用 Python 的 `main.py` 目录约定。20–22 保留的历史辅助脚本及 22 的本地 OTLP 测试接收器，见 [Java 指南](README-JAVA.md)。
