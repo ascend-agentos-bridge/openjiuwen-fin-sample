@@ -10,6 +10,11 @@ def verify(path: Path) -> dict:
     assert capture["authorizationMatched"] is True
     assert capture["ingestionVersion"] == "4"
     assert capture["contentType"].startswith("application/x-protobuf")
+    for request in capture["requests"]:
+        assert request["path"] == "/api/public/otel/v1/traces"
+        assert request["authorizationMatched"] is True
+        assert request["ingestionVersion"] == "4"
+        assert request["contentType"].startswith("application/x-protobuf")
     spans = capture["spans"]
     assert len(spans) == 4, f"应收到 Agent/2 LLM/工具共 4 个 span，实际 {len(spans)}"
     assert len({s["traceId"] for s in spans}) == 1
@@ -46,7 +51,3 @@ def verify(path: Path) -> dict:
             "types": [s["attributes"]["langfuse.observation.type"] for s in spans],
             "totalTokens": [s["attributes"]["gen_ai.usage.total_tokens"] for s in llms],
             "reportId": report_id}
-
-
-if __name__ == "__main__":
-    print(json.dumps(verify(Path(__file__).parent / "logs/local_otlp_capture.json"), ensure_ascii=False))

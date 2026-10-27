@@ -27,6 +27,7 @@ class LocalReceiver:
     def __init__(self, capture_path: Path, reject: bool = False):
         self.capture_path = capture_path
         self.capture = None
+        self.requests = []
         self.failure = None
         receiver = self
         expected_auth = "Basic " + base64.b64encode(f"{self.public_key}:{self.secret_key}".encode()).decode()
@@ -57,9 +58,15 @@ class LocalReceiver:
                                "responseStatus": 401 if reject else 200, "spans": spans}
                     if self.path != "/api/public/otel/v1/traces" or not capture["authorizationMatched"]:
                         raise ValueError("OTLP 路径或认证不符")
+                    receiver.requests.append({key: value for key, value in capture.items() if key != "spans"})
+                    if receiver.capture is not None:
+                        previous = {span["spanId"]: span for span in receiver.capture["spans"]}
+                        previous.update({span["spanId"]: span for span in spans})
+                        capture["spans"] = list(previous.values())
+                    capture["requests"] = receiver.requests.copy()
                     receiver.capture = capture
                     capture_path.write_text(json.dumps(capture, ensure_ascii=False, indent=2) + "\n")
-                    # 空 protobuf 即合法的 ExportTraceServiceResponse；拒绝模式专门验证 Java 非零退出。
+                    # 空 protobuf 即合法响应；拒绝模式验证 SDK 报错且业务仍可完成。
                     self.send_response(capture["responseStatus"])
                     self.send_header("Content-Type", "application/x-protobuf")
                     self.send_header("Content-Length", "0")

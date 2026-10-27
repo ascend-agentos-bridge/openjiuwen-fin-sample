@@ -69,11 +69,11 @@ python main.py
 
 每个样例目录的 README 都含：场景说明、代码讲解、运行与验收方式、实测输出、注意点。其中“注意点”记的是真实踩过的坑（返回值形态、默认超时这类），换模型、升版本前值得先看。
 
-样例 20 需要 **JDK 17+、Maven 3.9+**；Java 源文件为 `src/main/java/CreditNestedAgents.java`，`main.py` 仅用于回归启动。模型配置沿用 `API_BASE` / `API_KEY` / `MODEL_NAME` / `MODEL_PROVIDER`；该样例默认模型为本机检测到的 `google/gemma-4-e4b`。可在样例目录运行 `mvn -q compile exec:java`，或在根目录运行 `python run_all_samples.py 20`；Maven 不在 PATH 时可通过 `MAVEN_CMD` 指定其可执行文件。
+样例 20 需要 **JDK 17+、Maven 3.9+**；Java 源文件为 `src/main/java/CreditNestedAgents.java`，`main.py` 仅启动业务示例，`test.py` 启动独立的 JUnit 验收。模型配置沿用 `API_BASE` / `API_KEY` / `MODEL_NAME` / `MODEL_PROVIDER`；该样例默认模型为本机检测到的 `google/gemma-4-e4b`。可在样例目录运行 `mvn -q compile exec:java`，或在根目录运行 `python run_all_samples.py 20`；Maven 不在 PATH 时可通过 `MAVEN_CMD` 指定其可执行文件。
 
 样例 21 使用同样的 JDK / Maven 环境，默认通过 OpenAI 兼容接口连接本地 LM Studio 的 `google/gemma-4-e4b`，支持 `API_BASE` / `API_KEY` / `MODEL_NAME`。在根目录运行 `python run_all_samples.py 21`，轨迹写入 `samples/21_java_call_trace/logs/call_trace.log` 和 `call_trace.jsonl`；包括完整官方 span、模型消息与用量、工具参数与结果、错误、运行配置和提示/工具/源码指纹，便于后续分析并关联反馈。日志不需要修改框架或安装链路追踪服务。
 
-样例 22 使用相同的 JDK / Maven 和本地模型配置，另需 `LANGFUSE_BASE_URL`、`LANGFUSE_PUBLIC_KEY`、`LANGFUSE_SECRET_KEY`。无 Langfuse 实例时，安装该样例 `requirements-local.txt` 后运行 `LANGFUSE_LOCAL_TEST=1 python3 run_all_samples.py 22`，验证真实模型调用和本地 OTLP 导出。本轮未验证真实 Langfuse 平台接收，详见样例 README。
+样例 22 的业务入口需要 `LANGFUSE_BASE_URL`、`LANGFUSE_PUBLIC_KEY`、`LANGFUSE_SECRET_KEY`，直接使用官方 BatchSpanProcessor 批量导出。单元测试运行 `mvn test`；安装该样例 `requirements-test.txt` 后，`python3 run_all_samples.py 22` 会调用独立 `test.py`，在测试目录启动本地接收器，验证真实模型和 OTLP 导出，不需要真实 Langfuse 实例。平台入库与界面展示仍需配置实例后验证。
 
 样例 23 沿用相同的 JDK / Maven 和模型配置，只有 Java/Maven 入口，没有 Python 启动器。`mvn -q compile exec:java` 只展示业务流程；`mvn test` 运行单元测试，`mvn -Preal-model test` 追加真实模型验收。根目录 `python3 run_all_samples.py 23` 识别 `pom.xml` 后直接调用 Maven，验收断言和观察器均位于 `src/test/java`。
 
@@ -94,7 +94,7 @@ python run_all_samples.py 01 06    # 只跑指定编号
 
 ## 验收口径
 
-- 样例 23 的业务入口是 Java main，所有验收断言位于 JUnit；回归脚本直接调用 Maven。其他样例的验收方式见各自 README，统一按退出码判断，非 0 即失败；
+- Java 样例 20–22 的 main 只展示业务用法，验收断言位于独立测试目录；23 使用纯 Maven 入口运行 JUnit。回归脚本按测试退出码判断，非 0 即失败；
 - 各 README 的“实测输出”来自真实运行，不是手写效果图（本地网关实测过 qwen3-4b-thinking、qwen3.5-9b、gemma-4-e2b，各样例 README 标注自己用的模型）；
 - LLM 输出有随机性，断言只锚结构性事实：工具是否被调用、状态机走向、分数区间，不断言具体措辞；
 - 升级 openjiuwen 或换模型后跑一遍回归，把受影响样例的实测输出同步更新。
@@ -110,9 +110,10 @@ openjiuwen-sample/
 ├── samples/
 │   └── NN_name/            23 个样例，一特性一文件夹
 │       ├── main.py         Python / 旧样例入口；23 使用 pom.xml 与 Java main
+│       ├── test.py         20–22 独立测试入口
 │       └── README.md       场景 / 代码讲解 / 运行 / 验收 / 实测输出 / 注意点
 ├── FEATURES.md            Python / Java 特性索引
-├── run_all_samples.py      一键回归，支持 Maven 与旧 Python 入口
+├── run_all_samples.py      一键回归，识别 Maven 项目或旧 Python 入口
 ├── docs/checklist-review.md
 └── AGENTS.md               仓库约束：只用官方 API、不本地封装、锁最新 release
 ```

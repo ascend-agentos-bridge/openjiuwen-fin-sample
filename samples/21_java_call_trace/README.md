@@ -33,10 +33,33 @@
 cd samples/21_java_call_trace
 mvn -q compile exec:java
 cat logs/call_trace.log
-python3 verify_logs.py
+# 或使用只负责启动演示的 Python 入口
+python3 main.py
 ```
 
 首次执行由 Maven 下载官方 Java SDK 及其传递依赖。模型 provider 固定为 `openai`。使用官方 `ModelRequestConfig.setExtraField("stream_options", Map.of("include_usage", true))` 请求流式用量；没有自行发送模型 HTTP 请求或修改框架。
+
+`main.py` 只启动 `mvn compile exec:java` 并传递退出码，Java 最长等待 300 秒。正常演示消费官方 `OutputSchema(type=answer)` 输出业务 `RESULT`，不回读日志、不缓存 span 做断言，也不产生 `VALIDATION` / `SUCCESS` 验收事件。
+
+## 测试与验收
+
+离线单元测试不访问模型服务，覆盖演示/测试启动器边界、JSONL 转义与关联字段、官方输出事件转为业务结果、错误堆栈、span 序列化、用量缺失/全零标记、配置指纹和演示征信工具。测试中构造的 schema 仅用于格式化检查，不用于替代 LLM 调用。
+
+```bash
+cd samples/21_java_call_trace
+mvn -q test
+```
+
+真实模型验收使用 JUnit `@Tag("integration")`，通过 `real-model` profile 开启。它在独立 JVM 运行同一个 `CreditCallTrace.main`，检查真实 LM Studio 输出的 Agent/LLM/工具 span、父子关系、工具调用参数、本次工具生成的报告编号、用量与文件一致性。另一个集成用例访问本机不可达端口，验证实际连接失败的错误轨迹和非零退出码。测试不使用 mock 模型或保存的模型回答。
+
+```bash
+cd samples/21_java_call_trace
+mvn -q -Preal-model test
+# 或运行测试启动器
+python3 test.py
+```
+
+JUnit 会打印本次真实 `RESULT`、`TRACE SUMMARY`（span/模型/工具数量）和 `USAGE SUMMARY`，用于核对当前运行；完整子进程输出保存在 `target/real-model-output.txt` 和 `target/unavailable-service-output.txt`。测试报告在 `target/surefire-reports/`。只有真实模型集成测试成功后，才能把本次输出作为新版实测证据。
 
 在仓库根目录执行统一回归（Python 3.11+）：
 
@@ -44,7 +67,7 @@ python3 verify_logs.py
 python3 run_all_samples.py 21
 ```
 
-`main.py` 启动 Maven，传递退出码，成功后调用 `verify_logs.py` 验收真实文件。Java 最长等待 300 秒。
+统一回归使用独立测试入口 `test.py`；演示入口与验收入口分开。
 
 ## 日志包含的数据
 
@@ -58,117 +81,64 @@ python3 run_all_samples.py 21
 | `TRACE.data.durationMs` | 根据 span 的起止时间计算的数值毫秒，调用尚未结束时为 `null`，便于批量统计 |
 | LLM 的 `data.usage` / `usageStatus` | 原始官方 UsageMetadata，含 input/output/total/cache token 等；非零计数标记 `reported_by_sdk`，缺失或全零标记 `not_reported_or_zero` |
 | `span.error` / `RUN_ERROR.data` | 官方调用错误（当前通常为 message），以及样例运行异常的类型、message、堆栈；错误事件也关联链路 |
-| `RESULT` / `VALIDATION` / `SUCCESS` | 最终业务结果、现有样例断言结果与通过标记；`VALIDATION.scope=sample_contract`，只代表样例契约验收 |
+| `RESULT.data` | 直接来自官方 `OutputSchema(type=answer).payload` 的最终业务结果，包含 `result_type` 和 `output` |
 
 `CONFIG` 在执行开始前输出，此时 `traceId=null`，通过相同 `runId` 关联后续轨迹。JSONL 每行一个 JSON 对象；可读日志在同一 JSON 前增加时间、级别和事件名，两份文件的事件逐条一致。
 
 ## 代码详解与验收
 
-[`CreditCallTrace.java`](src/main/java/CreditCallTrace.java) 是单文件入口：配置官方 ReActAgent 和 LocalFunction，注册官方 OtelRail，消费 `StreamMode.TRACE`，直接序列化官方 span。Jackson 和文件写入仅负责样例输出格式，没有新增模型、Agent、工具或追踪框架封装。
+[`CreditCallTrace.java`](src/main/java/CreditCallTrace.java) 是单文件入口：用有名方法组装征信业务配置与工具，注册官方 OtelRail，消费 `StreamMode.TRACE` / `StreamMode.OUTPUT` 并输出结果，最后释放 stream、工具、session 和 Runner。Jackson 和文件写入仅负责样例输出格式，没有新增模型、Agent、工具或追踪框架封装。
 
 [`logback-credit-trace.xml`](src/main/resources/logback-credit-trace.xml) 控制可读日志格式；Maven exec 插件通过 `logback.configurationFile` 选择它。若用 IDE 或直接运行 Java，请加 JVM 参数 `-Dlogback.configurationFile=logback-credit-trace.xml`，并把工作目录设为本样例目录。两份日志每次运行覆盖；本次实测另保存为下面的版本化文件。
 
-Java 检查一个完成的 Agent 根 span、至少两次 LLM 和一次工具调用、统一链路 ID、正确父子关系、工具真实生成的报告编号回传及日志落盘。Python 继续检查 JSONL 可解析、公共关联字段、实际模型消息和工具数据、用量标记、稳定配置指纹，以及可读日志和 JSONL 完全一致。任一项失败都返回非零。
+所有验收断言都在 [`src/test/java/`](src/test/java/)：`CreditCallTraceTest` 覆盖离线业务/格式化逻辑，`CreditCallTraceLauncherTest` 检查两个 Python 启动器，`CreditCallTraceIntegrationTest` 执行真实链路，`TraceLogAssertions` 检查日志和业务契约。普通演示只因实际运行异常失败；测试负责报告断言失败。
 
-## 实测输出
+## 重构后实测输出
 
-2026-10-26，Corretto 17.0.21 / Maven 3.9.9 / SDK `0.1.16`，真实调用本机 LM Studio `google/gemma-4-e4b`。保存文件：
+以下来自当前业务入口的真实 LM Studio 执行；所有断言均由 JUnit 集成测试执行。数据文件 [run_output.txt](run_output.txt)、[run_trace.jsonl](run_trace.jsonl)、[run_error_trace.jsonl](run_error_trace.jsonl) 已同步为重构后的真实结果，不再包含验收事件。
 
-- [`run_output.txt`](run_output.txt)：完整 `call_trace.log`。
-- [`run_trace.jsonl`](run_trace.jsonl)：与上述可读日志相同的完整 JSONL 事件。
-- [`run_error_trace.jsonl`](run_error_trace.jsonl)：在独立临时目录用不可达的 `127.0.0.1:1` 实测的错误轨迹。
-
-本次调用产生 8 条 TRACE 事件，对应 4 个 span（Agent、LLM、征信工具、LLM）。以下用量来自模型服务返回的数据，由官方 SDK 解析：
-
-| 模型调用 | usageStatus | input_tokens | output_tokens | total_tokens |
-|---|---|---|---|---|
-| 第 1 次 | reported_by_sdk | 173 | 195 | 368 |
-| 第 2 次 | reported_by_sdk | 257 | 30 | 287 |
-
-### call_trace.log 完整输出样例
-
-<details>
-<summary>展开完整实际日志，包含模型消息、工具参数与结果、用量和配置指纹</summary>
+JUnit 实际打印：
 
 ```text
-2026-10-26 19:26:15.341 INFO  sample.call_trace - CONFIG {"schemaVersion":1,"timestamp":"2026-10-26T11:26:15.327202Z","event":"CONFIG","runId":"f0f87b24-a361-43df-bef4-fff8ba7f3924","sessionId":"credit-trace-f0f87b24-a361-43df-bef4-fff8ba7f3924","caseId":"credit_c1001","traceId":null,"data":{"sdkVersion":"0.1.16","modelProvider":"openai","apiBase":"http://127.0.0.1:1234/v1","modelRequestConfig":{"temperature":0.1,"model":"google/gemma-4-e4b","top_p":0.1,"max_tokens":512,"stream_options":{"include_usage":true}},"maxIterations":3,"prompt":"你是银行贷前审查助手。必须先调用 query_credit_report 查询客户征信，每次只调用一次，获得结果后不要再次调用工具。用中文简短回答，必须原样包含报告编号、客户编号和信用评分。不得编造征信记录，不得作出实际放款承诺。","promptSha256":"d8bfd2f80a008cf97cf83688dacdf36731e269c6652ae6f0588c17c3f97bc24e","tools":[{"id":"query_credit_report","name":"query_credit_report","description":"查询客户的演示征信档案","inputParams":{"properties":{"customer_id":{"type":"string","description":"客户编号，例如 C1001"}},"type":"object","required":["customer_id"]},"properties":{}}],"toolSchemaSha256":"1b0d274f405535d9f845b9e0178cdf055c153368f7c80753a4db9fcfee83338a","sampleSourceSha256":"25f84eb9081894a87a6ce0a79fa8db6de8fad2b39e215bcdcf9aa6fde06a3353","javaVersion":"17.0.21","timeZone":"Asia/Shanghai"}}
-2026-10-26 19:26:15.471 INFO  sample.call_trace - TRACE {"schemaVersion":1,"timestamp":"2026-10-26T11:26:15.453263Z","event":"TRACE","runId":"f0f87b24-a361-43df-bef4-fff8ba7f3924","sessionId":"credit-trace-f0f87b24-a361-43df-bef4-fff8ba7f3924","caseId":"credit_c1001","traceId":"8a34ef90-4630-4c82-b3ca-4a4e07728b0e","data":{"span":{"traceId":"8a34ef90-4630-4c82-b3ca-4a4e07728b0e","startTime":"2026-10-26T19:26:15.365018","endTime":null,"inputs":{"query":"请查询客户 C1001 的征信档案，给出简短的贷前核验摘要，保留报告编号。"},"outputs":null,"error":null,"invokeId":"7abcf9e8-b0f3-49ac-aa5b-e94329c73726","parentInvokeId":null,"childInvokesId":null,"status":"start","onInvokeData":null,"invokeType":"chain","name":"credit_trace_agent","elapsedTime":null,"metaData":{"type":"agent","class_name":"credit_trace_agent"}},"durationMs":null}}
-2026-10-26 19:27:08.120 INFO  sample.call_trace - TRACE {"schemaVersion":1,"timestamp":"2026-10-26T11:27:08.084266Z","event":"TRACE","runId":"f0f87b24-a361-43df-bef4-fff8ba7f3924","sessionId":"credit-trace-f0f87b24-a361-43df-bef4-fff8ba7f3924","caseId":"credit_c1001","traceId":"8a34ef90-4630-4c82-b3ca-4a4e07728b0e","data":{"span":{"traceId":"8a34ef90-4630-4c82-b3ca-4a4e07728b0e","startTime":"2026-10-26T19:26:15.453194","endTime":null,"inputs":{"messages":[{"role":"system","content":"你是银行贷前审查助手。必须先调用 query_credit_report 查询客户征信，每次只调用一次，获得结果后不要再次调用工具。用中文简短回答，必须原样包含报告编号、客户编号和信用评分。不得编造征信记录，不得作出实际放款承诺。","contentAsString":"你是银行贷前审查助手。必须先调用 query_credit_report 查询客户征信，每次只调用一次，获得结果后不要再次调用工具。用中文简短回答，必须原样包含报告编号、客户编号和信用评分。不得编造征信记录，不得作出实际放款承诺。","contentAsList":[]},{"role":"user","content":"请查询客户 C1001 的征信档案，给出简短的贷前核验摘要，保留报告编号。","contentAsString":"请查询客户 C1001 的征信档案，给出简短的贷前核验摘要，保留报告编号。","contentAsList":[]}]},"outputs":null,"error":null,"invokeId":"c500aa1f-767b-425f-9a9a-7f7ca55174d7","parentInvokeId":"7abcf9e8-b0f3-49ac-aa5b-e94329c73726","childInvokesId":null,"status":"start","onInvokeData":null,"invokeType":"llm","name":"google/gemma-4-e4b","elapsedTime":null,"metaData":{"type":"llm","class_name":"google/gemma-4-e4b"}},"durationMs":null,"usage":null,"usageStatus":"not_reported_or_zero"}}
-2026-10-26 19:27:19.310 INFO  sample.call_trace - TRACE {"schemaVersion":1,"timestamp":"2026-10-26T11:27:19.288774Z","event":"TRACE","runId":"f0f87b24-a361-43df-bef4-fff8ba7f3924","sessionId":"credit-trace-f0f87b24-a361-43df-bef4-fff8ba7f3924","caseId":"credit_c1001","traceId":"8a34ef90-4630-4c82-b3ca-4a4e07728b0e","data":{"span":{"traceId":"8a34ef90-4630-4c82-b3ca-4a4e07728b0e","startTime":"2026-10-26T19:26:15.453194","endTime":"2026-10-26T19:27:19.272964","inputs":{"messages":[{"role":"system","content":"你是银行贷前审查助手。必须先调用 query_credit_report 查询客户征信，每次只调用一次，获得结果后不要再次调用工具。用中文简短回答，必须原样包含报告编号、客户编号和信用评分。不得编造征信记录，不得作出实际放款承诺。","contentAsString":"你是银行贷前审查助手。必须先调用 query_credit_report 查询客户征信，每次只调用一次，获得结果后不要再次调用工具。用中文简短回答，必须原样包含报告编号、客户编号和信用评分。不得编造征信记录，不得作出实际放款承诺。","contentAsList":[]},{"role":"user","content":"请查询客户 C1001 的征信档案，给出简短的贷前核验摘要，保留报告编号。","contentAsString":"请查询客户 C1001 的征信档案，给出简短的贷前核验摘要，保留报告编号。","contentAsList":[]}]},"outputs":{"outputs":{"role":"assistant","content":"","metadata":{},"contentAsString":"","contentAsList":[],"tool_calls":[{"id":"271699332","type":"function","name":"query_credit_report","arguments":"{\"customer_id\":\"C1001\"}","index":0}],"usage_metadata":{"code":0,"prompt":"","err_msg":"","task_id":"","model_name":"google/gemma-4-e4b","total_latency":0.0,"first_token_time":"","request_start_time":"","input_tokens":173,"output_tokens":195,"total_tokens":368,"cache_tokens":0},"finish_reason":"tool_calls","reasoning_content":"\nThe user wants me to act as a bank pre-loan review assistant.\nI need to query the credit report for customer ID C1001 using the `query_credit_report` tool.\nI must call this tool only once.\nAfter receiving the result, I need to provide a brief pre-loan verification summary in Chinese.\nThe response must strictly include the report number, customer ID, and credit score.\nI must not fabricate any credit records or make actual lending commitments.\n\nPlan:\n1. Call `query_credit_report` with `customer_id=\"C1001\"`.\n2. Wait for the tool output.\n3. Format the final response according to the constraints (brief, Chinese, include report ID, customer ID, credit score, no lending commitment)."},"response_string":"{\"role\":\"assistant\",\"content\":\"\",\"metadata\":{},\"contentAsString\":\"\",\"contentAsList\":[],\"tool_calls\":[{\"id\":\"271699332\",\"type\":\"function\",\"name\":\"query_credit_report\",\"arguments\":\"{\\\"customer_id\\\":\\\"C1001\\\"}\",\"index\":0}],\"usage_metadata\":{\"code\":0,\"prompt\":\"\",\"err_msg\":\"\",\"task_id\":\"\",\"model_name\":\"google/gemma-4-e4b\",\"total_latency\":0.0,\"first_token_time\":\"\",\"request_start_time\":\"\",\"input_tokens\":173,\"output_tokens\":195,\"total_tokens\":368,\"cache_tokens\":0},\"finish_reason\":\"tool_calls\",\"reasoning_content\":\"\\nThe user wants me to act as a bank pre-loan review assistant.\\nI need to query the credit report for customer ID C1001 using the `query_credit_report` tool.\\nI must call this tool only once.\\nAfter receiving the result, I need to provide a brief pre-loan verification summary in Chinese.\\nThe response must strictly include the report number, customer ID, and credit score.\\nI must not fabricate any credit records or make actual lending commitments.\\n\\nPlan:\\n1. Call `query_credit_report` with `customer_id=\\\"C1001\\\"`.\\n2. Wait for the tool output.\\n3. Format the final response according to the constraints (brief, Chinese, include report ID, customer ID, credit score, no lending commitment).\"}"},"error":null,"invokeId":"c500aa1f-767b-425f-9a9a-7f7ca55174d7","parentInvokeId":"7abcf9e8-b0f3-49ac-aa5b-e94329c73726","childInvokesId":null,"status":"finish","onInvokeData":null,"invokeType":"llm","name":"google/gemma-4-e4b","elapsedTime":"63.82s","metaData":{"type":"llm","class_name":"google/gemma-4-e4b"}},"durationMs":63819,"usage":{"code":0,"prompt":"","err_msg":"","task_id":"","model_name":"google/gemma-4-e4b","total_latency":0.0,"first_token_time":"","request_start_time":"","input_tokens":173,"output_tokens":195,"total_tokens":368,"cache_tokens":0},"usageStatus":"reported_by_sdk"}}
-2026-10-26 19:27:19.312 INFO  sample.call_trace - TRACE {"schemaVersion":1,"timestamp":"2026-10-26T11:27:19.312022Z","event":"TRACE","runId":"f0f87b24-a361-43df-bef4-fff8ba7f3924","sessionId":"credit-trace-f0f87b24-a361-43df-bef4-fff8ba7f3924","caseId":"credit_c1001","traceId":"8a34ef90-4630-4c82-b3ca-4a4e07728b0e","data":{"span":{"traceId":"8a34ef90-4630-4c82-b3ca-4a4e07728b0e","startTime":"2026-10-26T19:27:19.288626","endTime":null,"inputs":{"inputs":"{\"customer_id\":\"C1001\"}"},"outputs":null,"error":null,"invokeId":"1b133a06-0fd6-405f-b4fc-48233d3d4f68","parentInvokeId":"7abcf9e8-b0f3-49ac-aa5b-e94329c73726","childInvokesId":null,"status":"start","onInvokeData":null,"invokeType":"plugin","name":"query_credit_report","elapsedTime":null,"metaData":{"type":"plugin","class_name":"query_credit_report"}},"durationMs":null}}
-2026-10-26 19:27:19.312 INFO  sample.call_trace - TRACE {"schemaVersion":1,"timestamp":"2026-10-26T11:27:19.312337Z","event":"TRACE","runId":"f0f87b24-a361-43df-bef4-fff8ba7f3924","sessionId":"credit-trace-f0f87b24-a361-43df-bef4-fff8ba7f3924","caseId":"credit_c1001","traceId":"8a34ef90-4630-4c82-b3ca-4a4e07728b0e","data":{"span":{"traceId":"8a34ef90-4630-4c82-b3ca-4a4e07728b0e","startTime":"2026-10-26T19:27:19.288626","endTime":"2026-10-26T19:27:19.295498","inputs":{"inputs":"{\"customer_id\":\"C1001\"}"},"outputs":{"outputs":{"overdue_months":0,"report_id":"CR-bc729a53","data_source":"演示数据","customer_id":"C1001","credit_score":735}},"error":null,"invokeId":"1b133a06-0fd6-405f-b4fc-48233d3d4f68","parentInvokeId":"7abcf9e8-b0f3-49ac-aa5b-e94329c73726","childInvokesId":null,"status":"finish","onInvokeData":null,"invokeType":"plugin","name":"query_credit_report","elapsedTime":"6ms","metaData":{"type":"plugin","class_name":"query_credit_report"}},"durationMs":6}}
-2026-10-26 19:27:20.404 INFO  sample.call_trace - TRACE {"schemaVersion":1,"timestamp":"2026-10-26T11:27:20.399622Z","event":"TRACE","runId":"f0f87b24-a361-43df-bef4-fff8ba7f3924","sessionId":"credit-trace-f0f87b24-a361-43df-bef4-fff8ba7f3924","caseId":"credit_c1001","traceId":"8a34ef90-4630-4c82-b3ca-4a4e07728b0e","data":{"span":{"traceId":"8a34ef90-4630-4c82-b3ca-4a4e07728b0e","startTime":"2026-10-26T19:27:19.298699","endTime":null,"inputs":{"messages":[{"role":"system","content":"你是银行贷前审查助手。必须先调用 query_credit_report 查询客户征信，每次只调用一次，获得结果后不要再次调用工具。用中文简短回答，必须原样包含报告编号、客户编号和信用评分。不得编造征信记录，不得作出实际放款承诺。","contentAsString":"你是银行贷前审查助手。必须先调用 query_credit_report 查询客户征信，每次只调用一次，获得结果后不要再次调用工具。用中文简短回答，必须原样包含报告编号、客户编号和信用评分。不得编造征信记录，不得作出实际放款承诺。","contentAsList":[]},{"role":"user","content":"请查询客户 C1001 的征信档案，给出简短的贷前核验摘要，保留报告编号。","contentAsString":"请查询客户 C1001 的征信档案，给出简短的贷前核验摘要，保留报告编号。","contentAsList":[]},{"role":"assistant","content":"","metadata":{},"contentAsString":"","contentAsList":[],"tool_calls":[{"id":"271699332","type":"function","name":"query_credit_report","arguments":"{\"customer_id\":\"C1001\"}","index":0}]},{"role":"tool","content":"{overdue_months=0, report_id=CR-bc729a53, data_source=演示数据, customer_id=C1001, credit_score=735}","metadata":{},"contentAsString":"{overdue_months=0, report_id=CR-bc729a53, data_source=演示数据, customer_id=C1001, credit_score=735}","contentAsList":[],"tool_call_id":"271699332"}]},"outputs":null,"error":null,"invokeId":"d14a396e-81b7-42d1-a4cf-1a54f4a74773","parentInvokeId":"7abcf9e8-b0f3-49ac-aa5b-e94329c73726","childInvokesId":null,"status":"start","onInvokeData":null,"invokeType":"llm","name":"google/gemma-4-e4b","elapsedTime":null,"metaData":{"type":"llm","class_name":"google/gemma-4-e4b"}},"durationMs":null,"usage":null,"usageStatus":"not_reported_or_zero"}}
-2026-10-26 19:27:21.300 INFO  sample.call_trace - TRACE {"schemaVersion":1,"timestamp":"2026-10-26T11:27:21.299355Z","event":"TRACE","runId":"f0f87b24-a361-43df-bef4-fff8ba7f3924","sessionId":"credit-trace-f0f87b24-a361-43df-bef4-fff8ba7f3924","caseId":"credit_c1001","traceId":"8a34ef90-4630-4c82-b3ca-4a4e07728b0e","data":{"span":{"traceId":"8a34ef90-4630-4c82-b3ca-4a4e07728b0e","startTime":"2026-10-26T19:27:19.298699","endTime":"2026-10-26T19:27:21.297855","inputs":{"messages":[{"role":"system","content":"你是银行贷前审查助手。必须先调用 query_credit_report 查询客户征信，每次只调用一次，获得结果后不要再次调用工具。用中文简短回答，必须原样包含报告编号、客户编号和信用评分。不得编造征信记录，不得作出实际放款承诺。","contentAsString":"你是银行贷前审查助手。必须先调用 query_credit_report 查询客户征信，每次只调用一次，获得结果后不要再次调用工具。用中文简短回答，必须原样包含报告编号、客户编号和信用评分。不得编造征信记录，不得作出实际放款承诺。","contentAsList":[]},{"role":"user","content":"请查询客户 C1001 的征信档案，给出简短的贷前核验摘要，保留报告编号。","contentAsString":"请查询客户 C1001 的征信档案，给出简短的贷前核验摘要，保留报告编号。","contentAsList":[]},{"role":"assistant","content":"","metadata":{},"contentAsString":"","contentAsList":[],"tool_calls":[{"id":"271699332","type":"function","name":"query_credit_report","arguments":"{\"customer_id\":\"C1001\"}","index":0}]},{"role":"tool","content":"{overdue_months=0, report_id=CR-bc729a53, data_source=演示数据, customer_id=C1001, credit_score=735}","metadata":{},"contentAsString":"{overdue_months=0, report_id=CR-bc729a53, data_source=演示数据, customer_id=C1001, credit_score=735}","contentAsList":[],"tool_call_id":"271699332"}]},"outputs":{"outputs":{"role":"assistant","content":"报告编号：CR-bc729a53，客户编号：C1001，信用评分：735。","metadata":{},"contentAsString":"报告编号：CR-bc729a53，客户编号：C1001，信用评分：735。","contentAsList":[],"usage_metadata":{"code":0,"prompt":"","err_msg":"","task_id":"","model_name":"google/gemma-4-e4b","total_latency":0.0,"first_token_time":"","request_start_time":"","input_tokens":257,"output_tokens":30,"total_tokens":287,"cache_tokens":0},"finish_reason":"stop","reasoning_content":""},"response_string":"{\"role\":\"assistant\",\"content\":\"报告编号：CR-bc729a53，客户编号：C1001，信用评分：735。\",\"metadata\":{},\"contentAsString\":\"报告编号：CR-bc729a53，客户编号：C1001，信用评分：735。\",\"contentAsList\":[],\"usage_metadata\":{\"code\":0,\"prompt\":\"\",\"err_msg\":\"\",\"task_id\":\"\",\"model_name\":\"google/gemma-4-e4b\",\"total_latency\":0.0,\"first_token_time\":\"\",\"request_start_time\":\"\",\"input_tokens\":257,\"output_tokens\":30,\"total_tokens\":287,\"cache_tokens\":0},\"finish_reason\":\"stop\",\"reasoning_content\":\"\"}"},"error":null,"invokeId":"d14a396e-81b7-42d1-a4cf-1a54f4a74773","parentInvokeId":"7abcf9e8-b0f3-49ac-aa5b-e94329c73726","childInvokesId":null,"status":"finish","onInvokeData":null,"invokeType":"llm","name":"google/gemma-4-e4b","elapsedTime":"2.00s","metaData":{"type":"llm","class_name":"google/gemma-4-e4b"}},"durationMs":1999,"usage":{"code":0,"prompt":"","err_msg":"","task_id":"","model_name":"google/gemma-4-e4b","total_latency":0.0,"first_token_time":"","request_start_time":"","input_tokens":257,"output_tokens":30,"total_tokens":287,"cache_tokens":0},"usageStatus":"reported_by_sdk"}}
-2026-10-26 19:27:21.302 INFO  sample.call_trace - TRACE {"schemaVersion":1,"timestamp":"2026-10-26T11:27:21.302066Z","event":"TRACE","runId":"f0f87b24-a361-43df-bef4-fff8ba7f3924","sessionId":"credit-trace-f0f87b24-a361-43df-bef4-fff8ba7f3924","caseId":"credit_c1001","traceId":"8a34ef90-4630-4c82-b3ca-4a4e07728b0e","data":{"span":{"traceId":"8a34ef90-4630-4c82-b3ca-4a4e07728b0e","startTime":"2026-10-26T19:26:15.365018","endTime":"2026-10-26T19:27:21.29916","inputs":{"query":"请查询客户 C1001 的征信档案，给出简短的贷前核验摘要，保留报告编号。"},"outputs":{"outputs":{"output":"报告编号：CR-bc729a53，客户编号：C1001，信用评分：735。","result_type":"answer"}},"error":null,"invokeId":"7abcf9e8-b0f3-49ac-aa5b-e94329c73726","parentInvokeId":null,"childInvokesId":["c500aa1f-767b-425f-9a9a-7f7ca55174d7","1b133a06-0fd6-405f-b4fc-48233d3d4f68","d14a396e-81b7-42d1-a4cf-1a54f4a74773"],"status":"finish","onInvokeData":null,"invokeType":"chain","name":"credit_trace_agent","elapsedTime":"65.93s","metaData":{"type":"agent","class_name":"credit_trace_agent"}},"durationMs":65934}}
-2026-10-26 19:27:21.310 INFO  sample.call_trace - RESULT {"schemaVersion":1,"timestamp":"2026-10-26T11:27:21.310479Z","event":"RESULT","runId":"f0f87b24-a361-43df-bef4-fff8ba7f3924","sessionId":"credit-trace-f0f87b24-a361-43df-bef4-fff8ba7f3924","caseId":"credit_c1001","traceId":"8a34ef90-4630-4c82-b3ca-4a4e07728b0e","data":{"outputs":{"output":"报告编号：CR-bc729a53，客户编号：C1001，信用评分：735。","result_type":"answer"}}}
-2026-10-26 19:27:21.313 INFO  sample.call_trace - VALIDATION {"schemaVersion":1,"timestamp":"2026-10-26T11:27:21.311174Z","event":"VALIDATION","runId":"f0f87b24-a361-43df-bef4-fff8ba7f3924","sessionId":"credit-trace-f0f87b24-a361-43df-bef4-fff8ba7f3924","caseId":"credit_c1001","traceId":"8a34ef90-4630-4c82-b3ca-4a4e07728b0e","data":{"checks":["completed_agent_and_model_calls","tool_called_with_customer_id","report_id_preserved","trace_parent_relationships","log_written"],"scope":"sample_contract","passed":true}}
-2026-10-26 19:27:21.314 INFO  sample.call_trace - SUCCESS {"schemaVersion":1,"timestamp":"2026-10-26T11:27:21.314001Z","event":"SUCCESS","runId":"f0f87b24-a361-43df-bef4-fff8ba7f3924","sessionId":"credit-trace-f0f87b24-a361-43df-bef4-fff8ba7f3924","caseId":"credit_c1001","traceId":"8a34ef90-4630-4c82-b3ca-4a4e07728b0e","data":{"spanCount":4,"message":"Java 调用链验收通过"}}
+ERROR TRACE: Agent 流执行失败: {output=Model stream failed after retries, no terminal result, result_type=error}
+RESULT: 报告编号：CR-4cda47ab，客户编号：C1001，信用评分：735。
+TRACE SUMMARY: spanCount=4, llmCalls=2, toolCalls=1
+USAGE SUMMARY: inputTokens=428, outputTokens=220, totalTokens=648, reportedCalls=2/2
 ```
 
-</details>
-
-### JSONL 中的工具完成事件
-
-下面一条记录从同次运行的 JSONL 原样提取，仅缩进便于阅读：
-
-```json
-{
-  "schemaVersion": 1,
-  "timestamp": "2026-10-26T11:27:19.312337Z",
-  "event": "TRACE",
-  "runId": "f0f87b24-a361-43df-bef4-fff8ba7f3924",
-  "sessionId": "credit-trace-f0f87b24-a361-43df-bef4-fff8ba7f3924",
-  "caseId": "credit_c1001",
-  "traceId": "8a34ef90-4630-4c82-b3ca-4a4e07728b0e",
-  "data": {
-    "span": {
-      "traceId": "8a34ef90-4630-4c82-b3ca-4a4e07728b0e",
-      "startTime": "2026-10-26T19:27:19.288626",
-      "endTime": "2026-10-26T19:27:19.295498",
-      "inputs": {
-        "inputs": "{\"customer_id\":\"C1001\"}"
-      },
-      "outputs": {
-        "outputs": {
-          "overdue_months": 0,
-          "report_id": "CR-bc729a53",
-          "data_source": "演示数据",
-          "customer_id": "C1001",
-          "credit_score": 735
-        }
-      },
-      "error": null,
-      "invokeId": "1b133a06-0fd6-405f-b4fc-48233d3d4f68",
-      "parentInvokeId": "7abcf9e8-b0f3-49ac-aa5b-e94329c73726",
-      "childInvokesId": null,
-      "status": "finish",
-      "onInvokeData": null,
-      "invokeType": "plugin",
-      "name": "query_credit_report",
-      "elapsedTime": "6ms",
-      "metaData": {
-        "type": "plugin",
-        "class_name": "query_credit_report"
-      }
-    },
-    "durationMs": 6
-  }
-}
-```
-
-统一回归实测：
+统一回归结果：
 
 ```text
-[PASS] 21_java_call_trace           (83.0s)
+[PASS] 21_java_call_trace           (30.9s)
 
 ===== 汇总: 1/1 通过 =====
 ```
 
-负向实测：模型服务不可达时，官方客户端尝试 3 次，模型及 Agent 根 span 均为 `status=error`，日志记录实际 error message 和 RUN_ERROR 堆栈，Maven 退出码 1，未打印 SUCCESS。错误文件同样通过 `verify_logs.py --expect-error` 验收。
+共 **15 个测试通过（13 个单元测试、2 个集成测试）**。失败场景访问本机不可达地址，实际错误被记录为 RUN_ERROR 且进程非零退出；成功场景调用真实模型并保留本次工具生成的报告编号。
+
+### call_trace.log 完整输出样例
+
+<details>
+<summary>展开当前业务日志（完整模型输入输出、用量和配置，不含验收断言事件）</summary>
+
+```text
+2026-10-27 09:05:33.795 INFO  sample.call_trace - CONFIG {"schemaVersion":1,"timestamp":"2026-10-27T01:05:33.776765Z","event":"CONFIG","runId":"13500e4c-328a-471b-9fda-c415287f242c","sessionId":"credit-trace-13500e4c-328a-471b-9fda-c415287f242c","caseId":"credit_c1001","traceId":null,"data":{"sdkVersion":"0.1.16","modelProvider":"openai","apiBase":"http://127.0.0.1:1234/v1","modelRequestConfig":{"temperature":0.1,"model":"google/gemma-4-e4b","top_p":0.1,"max_tokens":512,"stream_options":{"include_usage":true}},"maxIterations":3,"prompt":"你是银行贷前审查助手。必须先调用 query_credit_report 查询客户征信，每次只调用一次，获得结果后不要再次调用工具。用中文简短回答，必须原样包含报告编号、客户编号和信用评分。不得编造征信记录，不得作出实际放款承诺。","promptSha256":"d8bfd2f80a008cf97cf83688dacdf36731e269c6652ae6f0588c17c3f97bc24e","tools":[{"id":"query_credit_report","name":"query_credit_report","description":"查询客户的演示征信档案","inputParams":{"required":["customer_id"],"type":"object","properties":{"customer_id":{"type":"string","description":"客户编号，例如 C1001"}}},"properties":{}}],"toolSchemaSha256":"1b0d274f405535d9f845b9e0178cdf055c153368f7c80753a4db9fcfee83338a","sampleSourceSha256":"0d6993116d7b930e1b3b43f48302d088704a5e9c5e7793327b1d5152c1b1ce95","javaVersion":"17.0.21","timeZone":"Asia/Shanghai"}}
+2026-10-27 09:05:33.901 INFO  sample.call_trace - TRACE {"schemaVersion":1,"timestamp":"2026-10-27T01:05:33.881082Z","event":"TRACE","runId":"13500e4c-328a-471b-9fda-c415287f242c","sessionId":"credit-trace-13500e4c-328a-471b-9fda-c415287f242c","caseId":"credit_c1001","traceId":"2a8ebb48-332a-4703-8a33-cea19b1f3afb","data":{"span":{"traceId":"2a8ebb48-332a-4703-8a33-cea19b1f3afb","startTime":"2026-10-27T09:05:33.813141","endTime":null,"inputs":{"query":"请查询客户 C1001 的征信档案，给出简短的贷前核验摘要，保留报告编号。"},"outputs":null,"error":null,"invokeId":"7dd4e056-4b6c-444f-b83f-0b66bd8e29cd","parentInvokeId":null,"childInvokesId":null,"status":"start","onInvokeData":null,"invokeType":"chain","name":"credit_trace_agent","elapsedTime":null,"metaData":{"type":"agent","class_name":"credit_trace_agent"}},"durationMs":null}}
+2026-10-27 09:05:39.458 INFO  sample.call_trace - TRACE {"schemaVersion":1,"timestamp":"2026-10-27T01:05:39.437414Z","event":"TRACE","runId":"13500e4c-328a-471b-9fda-c415287f242c","sessionId":"credit-trace-13500e4c-328a-471b-9fda-c415287f242c","caseId":"credit_c1001","traceId":"2a8ebb48-332a-4703-8a33-cea19b1f3afb","data":{"span":{"traceId":"2a8ebb48-332a-4703-8a33-cea19b1f3afb","startTime":"2026-10-27T09:05:33.881016","endTime":null,"inputs":{"messages":[{"role":"system","content":"你是银行贷前审查助手。必须先调用 query_credit_report 查询客户征信，每次只调用一次，获得结果后不要再次调用工具。用中文简短回答，必须原样包含报告编号、客户编号和信用评分。不得编造征信记录，不得作出实际放款承诺。","contentAsString":"你是银行贷前审查助手。必须先调用 query_credit_report 查询客户征信，每次只调用一次，获得结果后不要再次调用工具。用中文简短回答，必须原样包含报告编号、客户编号和信用评分。不得编造征信记录，不得作出实际放款承诺。","contentAsList":[]},{"role":"user","content":"请查询客户 C1001 的征信档案，给出简短的贷前核验摘要，保留报告编号。","contentAsString":"请查询客户 C1001 的征信档案，给出简短的贷前核验摘要，保留报告编号。","contentAsList":[]}]},"outputs":null,"error":null,"invokeId":"bb8416e4-c97d-424e-bb12-c5be2d83c077","parentInvokeId":"7dd4e056-4b6c-444f-b83f-0b66bd8e29cd","childInvokesId":null,"status":"start","onInvokeData":null,"invokeType":"llm","name":"google/gemma-4-e4b","elapsedTime":null,"metaData":{"type":"llm","class_name":"google/gemma-4-e4b"}},"durationMs":null,"usage":null,"usageStatus":"not_reported_or_zero"}}
+2026-10-27 09:05:49.886 INFO  sample.call_trace - TRACE {"schemaVersion":1,"timestamp":"2026-10-27T01:05:49.857404Z","event":"TRACE","runId":"13500e4c-328a-471b-9fda-c415287f242c","sessionId":"credit-trace-13500e4c-328a-471b-9fda-c415287f242c","caseId":"credit_c1001","traceId":"2a8ebb48-332a-4703-8a33-cea19b1f3afb","data":{"span":{"traceId":"2a8ebb48-332a-4703-8a33-cea19b1f3afb","startTime":"2026-10-27T09:05:33.881016","endTime":"2026-10-27T09:05:49.852016","inputs":{"messages":[{"role":"system","content":"你是银行贷前审查助手。必须先调用 query_credit_report 查询客户征信，每次只调用一次，获得结果后不要再次调用工具。用中文简短回答，必须原样包含报告编号、客户编号和信用评分。不得编造征信记录，不得作出实际放款承诺。","contentAsString":"你是银行贷前审查助手。必须先调用 query_credit_report 查询客户征信，每次只调用一次，获得结果后不要再次调用工具。用中文简短回答，必须原样包含报告编号、客户编号和信用评分。不得编造征信记录，不得作出实际放款承诺。","contentAsList":[]},{"role":"user","content":"请查询客户 C1001 的征信档案，给出简短的贷前核验摘要，保留报告编号。","contentAsString":"请查询客户 C1001 的征信档案，给出简短的贷前核验摘要，保留报告编号。","contentAsList":[]}]},"outputs":{"outputs":{"role":"assistant","content":"","metadata":{},"contentAsString":"","contentAsList":[],"tool_calls":[{"id":"842643577","type":"function","name":"query_credit_report","arguments":"{\"customer_id\":\"C1001\"}","index":0}],"usage_metadata":{"code":0,"prompt":"","err_msg":"","task_id":"","model_name":"google/gemma-4-e4b","total_latency":0.0,"first_token_time":"","request_start_time":"","input_tokens":173,"output_tokens":191,"total_tokens":364,"cache_tokens":0},"finish_reason":"tool_calls","reasoning_content":"\nThe user wants me to act as a bank pre-loan review assistant.\nI need to query the credit report for customer ID C1001 using the `query_credit_report` tool.\nI must call this tool only once.\nAfter receiving the result, I need to provide a brief pre-loan verification summary in Chinese.\nThe response must strictly include the report number, customer ID, and credit score.\nI must not fabricate any credit records or make actual lending commitments.\n\nPlan:\n1. Call `query_credit_report` with `customer_id=\"C1001\"`.\n2. Wait for the tool output.\n3. Format the final response according to the constraints (brief, Chinese, include report ID, customer ID, credit score)."},"response_string":"{\"role\":\"assistant\",\"content\":\"\",\"metadata\":{},\"contentAsString\":\"\",\"contentAsList\":[],\"tool_calls\":[{\"id\":\"842643577\",\"type\":\"function\",\"name\":\"query_credit_report\",\"arguments\":\"{\\\"customer_id\\\":\\\"C1001\\\"}\",\"index\":0}],\"usage_metadata\":{\"code\":0,\"prompt\":\"\",\"err_msg\":\"\",\"task_id\":\"\",\"model_name\":\"google/gemma-4-e4b\",\"total_latency\":0.0,\"first_token_time\":\"\",\"request_start_time\":\"\",\"input_tokens\":173,\"output_tokens\":191,\"total_tokens\":364,\"cache_tokens\":0},\"finish_reason\":\"tool_calls\",\"reasoning_content\":\"\\nThe user wants me to act as a bank pre-loan review assistant.\\nI need to query the credit report for customer ID C1001 using the `query_credit_report` tool.\\nI must call this tool only once.\\nAfter receiving the result, I need to provide a brief pre-loan verification summary in Chinese.\\nThe response must strictly include the report number, customer ID, and credit score.\\nI must not fabricate any credit records or make actual lending commitments.\\n\\nPlan:\\n1. Call `query_credit_report` with `customer_id=\\\"C1001\\\"`.\\n2. Wait for the tool output.\\n3. Format the final response according to the constraints (brief, Chinese, include report ID, customer ID, credit score).\"}"},"error":null,"invokeId":"bb8416e4-c97d-424e-bb12-c5be2d83c077","parentInvokeId":"7dd4e056-4b6c-444f-b83f-0b66bd8e29cd","childInvokesId":null,"status":"finish","onInvokeData":null,"invokeType":"llm","name":"google/gemma-4-e4b","elapsedTime":"15.97s","metaData":{"type":"llm","class_name":"google/gemma-4-e4b"}},"durationMs":15971,"usage":{"code":0,"prompt":"","err_msg":"","task_id":"","model_name":"google/gemma-4-e4b","total_latency":0.0,"first_token_time":"","request_start_time":"","input_tokens":173,"output_tokens":191,"total_tokens":364,"cache_tokens":0},"usageStatus":"reported_by_sdk"}}
+2026-10-27 09:05:49.888 INFO  sample.call_trace - TRACE {"schemaVersion":1,"timestamp":"2026-10-27T01:05:49.888843Z","event":"TRACE","runId":"13500e4c-328a-471b-9fda-c415287f242c","sessionId":"credit-trace-13500e4c-328a-471b-9fda-c415287f242c","caseId":"credit_c1001","traceId":"2a8ebb48-332a-4703-8a33-cea19b1f3afb","data":{"span":{"traceId":"2a8ebb48-332a-4703-8a33-cea19b1f3afb","startTime":"2026-10-27T09:05:49.857332","endTime":null,"inputs":{"inputs":"{\"customer_id\":\"C1001\"}"},"outputs":null,"error":null,"invokeId":"42e87018-798a-4519-9b21-0eea4f535ee9","parentInvokeId":"7dd4e056-4b6c-444f-b83f-0b66bd8e29cd","childInvokesId":null,"status":"start","onInvokeData":null,"invokeType":"plugin","name":"query_credit_report","elapsedTime":null,"metaData":{"type":"plugin","class_name":"query_credit_report"}},"durationMs":null}}
+2026-10-27 09:05:49.889 INFO  sample.call_trace - TRACE {"schemaVersion":1,"timestamp":"2026-10-27T01:05:49.889111Z","event":"TRACE","runId":"13500e4c-328a-471b-9fda-c415287f242c","sessionId":"credit-trace-13500e4c-328a-471b-9fda-c415287f242c","caseId":"credit_c1001","traceId":"2a8ebb48-332a-4703-8a33-cea19b1f3afb","data":{"span":{"traceId":"2a8ebb48-332a-4703-8a33-cea19b1f3afb","startTime":"2026-10-27T09:05:49.857332","endTime":"2026-10-27T09:05:49.861729","inputs":{"inputs":"{\"customer_id\":\"C1001\"}"},"outputs":{"outputs":{"data_source":"演示数据","report_id":"CR-4cda47ab","overdue_months":0,"credit_score":735,"customer_id":"C1001"}},"error":null,"invokeId":"42e87018-798a-4519-9b21-0eea4f535ee9","parentInvokeId":"7dd4e056-4b6c-444f-b83f-0b66bd8e29cd","childInvokesId":null,"status":"finish","onInvokeData":null,"invokeType":"plugin","name":"query_credit_report","elapsedTime":"4ms","metaData":{"type":"plugin","class_name":"query_credit_report"}},"durationMs":4}}
+2026-10-27 09:05:57.741 INFO  sample.call_trace - TRACE {"schemaVersion":1,"timestamp":"2026-10-27T01:05:57.725689Z","event":"TRACE","runId":"13500e4c-328a-471b-9fda-c415287f242c","sessionId":"credit-trace-13500e4c-328a-471b-9fda-c415287f242c","caseId":"credit_c1001","traceId":"2a8ebb48-332a-4703-8a33-cea19b1f3afb","data":{"span":{"traceId":"2a8ebb48-332a-4703-8a33-cea19b1f3afb","startTime":"2026-10-27T09:05:49.86512","endTime":null,"inputs":{"messages":[{"role":"system","content":"你是银行贷前审查助手。必须先调用 query_credit_report 查询客户征信，每次只调用一次，获得结果后不要再次调用工具。用中文简短回答，必须原样包含报告编号、客户编号和信用评分。不得编造征信记录，不得作出实际放款承诺。","contentAsString":"你是银行贷前审查助手。必须先调用 query_credit_report 查询客户征信，每次只调用一次，获得结果后不要再次调用工具。用中文简短回答，必须原样包含报告编号、客户编号和信用评分。不得编造征信记录，不得作出实际放款承诺。","contentAsList":[]},{"role":"user","content":"请查询客户 C1001 的征信档案，给出简短的贷前核验摘要，保留报告编号。","contentAsString":"请查询客户 C1001 的征信档案，给出简短的贷前核验摘要，保留报告编号。","contentAsList":[]},{"role":"assistant","content":"","metadata":{},"contentAsString":"","contentAsList":[],"tool_calls":[{"id":"842643577","type":"function","name":"query_credit_report","arguments":"{\"customer_id\":\"C1001\"}","index":0}]},{"role":"tool","content":"{data_source=演示数据, report_id=CR-4cda47ab, overdue_months=0, credit_score=735, customer_id=C1001}","metadata":{},"contentAsString":"{data_source=演示数据, report_id=CR-4cda47ab, overdue_months=0, credit_score=735, customer_id=C1001}","contentAsList":[],"tool_call_id":"842643577"}]},"outputs":null,"error":null,"invokeId":"d8477444-1ea9-4685-970a-ecb65e2150ec","parentInvokeId":"7dd4e056-4b6c-444f-b83f-0b66bd8e29cd","childInvokesId":null,"status":"start","onInvokeData":null,"invokeType":"llm","name":"google/gemma-4-e4b","elapsedTime":null,"metaData":{"type":"llm","class_name":"google/gemma-4-e4b"}},"durationMs":null,"usage":null,"usageStatus":"not_reported_or_zero"}}
+2026-10-27 09:05:58.620 INFO  sample.call_trace - TRACE {"schemaVersion":1,"timestamp":"2026-10-27T01:05:58.618388Z","event":"TRACE","runId":"13500e4c-328a-471b-9fda-c415287f242c","sessionId":"credit-trace-13500e4c-328a-471b-9fda-c415287f242c","caseId":"credit_c1001","traceId":"2a8ebb48-332a-4703-8a33-cea19b1f3afb","data":{"span":{"traceId":"2a8ebb48-332a-4703-8a33-cea19b1f3afb","startTime":"2026-10-27T09:05:49.86512","endTime":"2026-10-27T09:05:58.615387","inputs":{"messages":[{"role":"system","content":"你是银行贷前审查助手。必须先调用 query_credit_report 查询客户征信，每次只调用一次，获得结果后不要再次调用工具。用中文简短回答，必须原样包含报告编号、客户编号和信用评分。不得编造征信记录，不得作出实际放款承诺。","contentAsString":"你是银行贷前审查助手。必须先调用 query_credit_report 查询客户征信，每次只调用一次，获得结果后不要再次调用工具。用中文简短回答，必须原样包含报告编号、客户编号和信用评分。不得编造征信记录，不得作出实际放款承诺。","contentAsList":[]},{"role":"user","content":"请查询客户 C1001 的征信档案，给出简短的贷前核验摘要，保留报告编号。","contentAsString":"请查询客户 C1001 的征信档案，给出简短的贷前核验摘要，保留报告编号。","contentAsList":[]},{"role":"assistant","content":"","metadata":{},"contentAsString":"","contentAsList":[],"tool_calls":[{"id":"842643577","type":"function","name":"query_credit_report","arguments":"{\"customer_id\":\"C1001\"}","index":0}]},{"role":"tool","content":"{data_source=演示数据, report_id=CR-4cda47ab, overdue_months=0, credit_score=735, customer_id=C1001}","metadata":{},"contentAsString":"{data_source=演示数据, report_id=CR-4cda47ab, overdue_months=0, credit_score=735, customer_id=C1001}","contentAsList":[],"tool_call_id":"842643577"}]},"outputs":{"outputs":{"role":"assistant","content":"报告编号：CR-4cda47ab，客户编号：C1001，信用评分：735。","metadata":{},"contentAsString":"报告编号：CR-4cda47ab，客户编号：C1001，信用评分：735。","contentAsList":[],"usage_metadata":{"code":0,"prompt":"","err_msg":"","task_id":"","model_name":"google/gemma-4-e4b","total_latency":0.0,"first_token_time":"","request_start_time":"","input_tokens":255,"output_tokens":29,"total_tokens":284,"cache_tokens":0},"finish_reason":"stop","reasoning_content":""},"response_string":"{\"role\":\"assistant\",\"content\":\"报告编号：CR-4cda47ab，客户编号：C1001，信用评分：735。\",\"metadata\":{},\"contentAsString\":\"报告编号：CR-4cda47ab，客户编号：C1001，信用评分：735。\",\"contentAsList\":[],\"usage_metadata\":{\"code\":0,\"prompt\":\"\",\"err_msg\":\"\",\"task_id\":\"\",\"model_name\":\"google/gemma-4-e4b\",\"total_latency\":0.0,\"first_token_time\":\"\",\"request_start_time\":\"\",\"input_tokens\":255,\"output_tokens\":29,\"total_tokens\":284,\"cache_tokens\":0},\"finish_reason\":\"stop\",\"reasoning_content\":\"\"}"},"error":null,"invokeId":"d8477444-1ea9-4685-970a-ecb65e2150ec","parentInvokeId":"7dd4e056-4b6c-444f-b83f-0b66bd8e29cd","childInvokesId":null,"status":"finish","onInvokeData":null,"invokeType":"llm","name":"google/gemma-4-e4b","elapsedTime":"8.75s","metaData":{"type":"llm","class_name":"google/gemma-4-e4b"}},"durationMs":8750,"usage":{"code":0,"prompt":"","err_msg":"","task_id":"","model_name":"google/gemma-4-e4b","total_latency":0.0,"first_token_time":"","request_start_time":"","input_tokens":255,"output_tokens":29,"total_tokens":284,"cache_tokens":0},"usageStatus":"reported_by_sdk"}}
+2026-10-27 09:05:58.622 INFO  sample.call_trace - TRACE {"schemaVersion":1,"timestamp":"2026-10-27T01:05:58.621275Z","event":"TRACE","runId":"13500e4c-328a-471b-9fda-c415287f242c","sessionId":"credit-trace-13500e4c-328a-471b-9fda-c415287f242c","caseId":"credit_c1001","traceId":"2a8ebb48-332a-4703-8a33-cea19b1f3afb","data":{"span":{"traceId":"2a8ebb48-332a-4703-8a33-cea19b1f3afb","startTime":"2026-10-27T09:05:33.813141","endTime":"2026-10-27T09:05:58.61809","inputs":{"query":"请查询客户 C1001 的征信档案，给出简短的贷前核验摘要，保留报告编号。"},"outputs":{"outputs":{"output":"报告编号：CR-4cda47ab，客户编号：C1001，信用评分：735。","result_type":"answer"}},"error":null,"invokeId":"7dd4e056-4b6c-444f-b83f-0b66bd8e29cd","parentInvokeId":null,"childInvokesId":["bb8416e4-c97d-424e-bb12-c5be2d83c077","42e87018-798a-4519-9b21-0eea4f535ee9","d8477444-1ea9-4685-970a-ecb65e2150ec"],"status":"finish","onInvokeData":null,"invokeType":"chain","name":"credit_trace_agent","elapsedTime":"24.80s","metaData":{"type":"agent","class_name":"credit_trace_agent"}},"durationMs":24804}}
+2026-10-27 09:05:58.622 INFO  sample.call_trace - RESULT {"schemaVersion":1,"timestamp":"2026-10-27T01:05:58.622418Z","event":"RESULT","runId":"13500e4c-328a-471b-9fda-c415287f242c","sessionId":"credit-trace-13500e4c-328a-471b-9fda-c415287f242c","caseId":"credit_c1001","traceId":"2a8ebb48-332a-4703-8a33-cea19b1f3afb","data":{"output":"报告编号：CR-4cda47ab，客户编号：C1001，信用评分：735。","result_type":"answer"}}
+```
+
+</details>
 
 ## 数据边界
 
 - 框架可输出轨迹和模型服务返回的用量；首 token 时间、服务内部延迟等字段如果为空或零，可能是 SDK 默认值，不视为实际测量结果。本例不编造这些指标，也不把缺失 token 统计解释为免费或零消耗。
-- `finish` 表示调用结束；`VALIDATION` 和 `SUCCESS` 只代表样例断言通过，均不代表业务答案质量评分。人工反馈、期望答案和评测分数需由业务或评测系统提供，可按 `caseId` / `runId` / `traceId` / `invokeId` 关联。
+- `finish` 表示调用结束；JUnit 通过表示样例契约验收成功，不代表业务答案质量评分。人工反馈、期望答案和评测分数需由业务或评测系统提供，可按 `caseId` / `runId` / `traceId` / `invokeId` 关联。
 - 日志记录完整提示和业务输入输出，本例使用演示征信数据；只序列化模型请求配置，不序列化含 API Key 的模型客户端配置。
 - 这里的 JSONL 是本样例的日志格式，不是 OTLP 协议。无需部署 Collector；需要标准遥测后端时可使用框架已有的 OtelAgentHandler / exporter。

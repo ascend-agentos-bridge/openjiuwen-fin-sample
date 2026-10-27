@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Offline formatting fixtures must not write to the demonstration's real log files. -->
+    <root level="OFF"/>
+</configuration>

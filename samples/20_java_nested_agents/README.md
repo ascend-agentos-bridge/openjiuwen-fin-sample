@@ -34,16 +34,18 @@
 征信记录 → 核验结论 → 风控建议 → 主管汇总
 ```
 
-业务数据是代码内明确标注的虚构客户演示记录；模型推理、工具选择、两次委派和逐级汇总均调用真实 LM Studio。运行时工具生成随机报告编号，主管最终输出必须保留该编号，防止绕过工具也通过验收。该样例展示调用机制，未实现真实银行审批规则。
+业务数据是代码内明确标注的虚构客户演示记录；模型推理、工具选择、两次委派和逐级汇总均调用真实 LM Studio。运行时工具生成随机报告编号，由核验员、风控专员和主管逐级保留。该样例展示调用机制，未实现真实银行审批规则。
 
 ## 代码详解
 
-- `src/main/java/CreditNestedAgents.java`：单个 Java 源文件，直接使用官方 SDK，不实现 Agent/LLM/Tool 核心封装。
+- `src/main/java/CreditNestedAgents.java`：直接使用官方 SDK；`main` 只装配业务、调用 `team.invoke()`、输出业务结果并释放资源。具名静态方法分别装配三个业务角色、征信工具和团队，没有 Agent/LLM/Tool 核心封装。
 - `HierarchicalToolsTeam` 自动把子 Agent 注册为父 Agent 可见的工具；只给主管暴露 `risk_officer`，只给风控专员暴露 `credit_checker`。
 - 子 Agent 的 `AgentCard.inputParams` 使用 `query` 字段，匹配 `ReActAgent.invoke()`；不使用默认的 `message` schema。
 - `LocalFunction` 只实现演示业务查询，仅第三层能调用。
-- 官方 `AgentCallbackEvent` 记录进入/退出、成功模型调用和工具调用，作为程序验收证据。
-- `main.py` 只启动 Maven，供现有 `run_all_samples.py` 发现及运行；Agent 逻辑全部在 Java 中。
+- 主程序通过官方 `AgentCallbackEvent` 输出进入/退出和工具调用日志，便于观察业务委派过程；验收状态和断言全部位于 `src/test/java/`。
+- `CreditNestedAgentsTest` 直接调用真实 `LocalFunction`，检查演示记录、未知客户拒绝和报告编号生成；不调用或替换模型。
+- `CreditNestedAgentsIntegrationTest` 标记 `@Tag("integration")`，复用业务装配方法，连接真实模型检查嵌套顺序、调用次数、工具参数及各层报告编号回传。
+- `main.py` 只启动 `mvn compile exec:java`；`test.py` 只启动 `mvn -Preal-model test`，供根目录统一回归入口运行。
 
 API 用法参考官方 [ReActWeatherAgentExample](https://github.com/openJiuwen-ai/agent-core-java/blob/v0.1.16/examples/react_agent/ReActWeatherAgentExample.java)、[Hierarchical Teams 示例说明](https://github.com/openJiuwen-ai/agent-core-java/blob/v0.1.16/examples/multi_agent/hierarchical/README.md)，并核对上述框架源码。官方 README 的安装片段可能仍写旧版版本号，本例以 release 和 Central 的 `0.1.16` 为准。
 
@@ -60,11 +62,13 @@ cd samples/20_java_nested_agents
 mvn -q compile exec:java
 ```
 
-也可以从仓库根目录运行：
+也可以通过 Python 启动同一业务演示：
 
 ```bash
-python run_all_samples.py 20
+python samples/20_java_nested_agents/main.py
 ```
+
+主程序保留 `ENTER`、`CALL`、`DATA`、`EXIT` 和 `RESULT` 业务日志；框架返回 `result_type=error` 时抛出包含原始错误的异常。报告编号、调用顺序与次数由测试检查。
 
 | 环境变量 | 默认值 | 用途 |
 |---|---|---|
@@ -79,53 +83,50 @@ python run_all_samples.py 20
 ```bash
 export API_BASE=http://127.0.0.1:1234/v1
 export MODEL_NAME=google/gemma-4-e4b
-python run_all_samples.py 20
+python samples/20_java_nested_agents/main.py
 ```
 
 ## 验收方式
 
-程序自带运行后检查，抛异常/Maven 非零退出即失败：
+JUnit 5.10.2 和 Maven Surefire 3.2.5 执行验收，测试失败时 Maven 非零退出。业务主程序不包含验收逻辑。
+
+```bash
+cd samples/20_java_nested_agents
+mvn -q test                     # 只执行离线单元测试，不连接模型
+mvn -q -Preal-model test         # 单元测试 + 真实模型集成测试
+```
+
+从仓库根目录执行完整回归：
+
+```bash
+python samples/20_java_nested_agents/test.py
+python run_all_samples.py 20
+```
+
+默认 `mvn test` 排除 `integration` 标签；`real-model` profile 显式启用真实模型测试。集成测试检查：
 
 1. 观察到进入顺序为主管 → 风控专员 → 核验员，退出顺序相反。
 2. 观察到主管调用风控专员、风控专员调用核验员、核验员调用查询工具，且本例每条边只执行一次。
-3. 三个 Agent 各至少完成一次真实模型调用。
-4. 演示征信工具确实查询 `C1001`，最终主管回答包含工具本次生成的随机报告编号。
-5. 团队返回 `result_type=answer`，打印 `SUCCESS:`。
+3. 三个 Agent 各至少完成两次真实模型调用，分别完成工具选择与结果汇总，并打印实际次数。
+4. 两次委派的 `query` 保留客户编号 `C1001`；征信查询参数为 `customer_id=C1001`。
+5. 征信工具生成的随机报告编号出现在核验员、风控专员和主管的答案中，三层均返回 `result_type=answer`。
 
-## 实测输出
+集成测试打印实际 `NESTING`、`CALLS`、`MODEL_CALLS`、`TOOL_ARGUMENTS` 和 `RESULT`，供排查及记录实测结果。JUnit 汇总为最终验收依据，不匹配固定报告编号或回答措辞，也不 mock LLM。
 
-2026-10-26 在本机真实运行：Amazon Corretto JDK 17.0.21、Maven 3.9.9、官方 SDK 0.1.16，LM Studio `google/gemma-4-e4b`。以下从运行日志提取，省略框架 INFO 日志；三层各调用模型 2 次，共 6 次。输出副本见 [verification-output.txt](verification-output.txt)。
+## 重构后实测输出
+
+以下为重构后 JUnit 真实模型集成测试的观察结果，使用 LM Studio `google/gemma-4-e4b`、Corretto 17.0.21、Maven 3.9.9、官方 SDK 0.1.16。顺序、次数和报告编号检查均在测试中完成；业务 main 不打印这些验收汇总。
 
 ```text
-SDK: com.openjiuwen:agent-core-java:0.1.16
-MODEL: google/gemma-4-e4b
-ENTER credit_master
-CALL  credit_master -> risk_officer
-ENTER risk_officer
-CALL  risk_officer -> credit_checker
-ENTER credit_checker
-CALL  credit_checker -> query_credit_record
-DATA  customer=C1001 report_id=CR-2ca87ea7
-EXIT  credit_checker
-EXIT  risk_officer
-EXIT  credit_master
-RESULT: {output=根据报告编号 CR-2ca87ea7，客户 C1001 的征信记录良好，信用评分 735，过去 24 个月内无逾期。建议继续进行后续的贷前审批流程。, result_type=answer}
 NESTING: [enter:credit_master, enter:risk_officer, enter:credit_checker, exit:credit_checker, exit:risk_officer, exit:credit_master]
+CALLS: [credit_master -> risk_officer, risk_officer -> credit_checker, credit_checker -> query_credit_record]
 MODEL_CALLS: {credit_master=2, risk_officer=2, credit_checker=2}
-SUCCESS: Java 三层 Agent 委派、真实模型调用和报告编号逐级回传验收通过
+TOOL_ARGUMENTS: {credit_master -> risk_officer={"query":"请对客户 C1001 做贷前征信核查，给出简短审查建议并注明报告编号。"}, credit_checker -> query_credit_record={"customer_id":"C1001"}, risk_officer -> credit_checker={"query":"请对客户 C1001 进行贷前征信核查，并给出简短审查建议。"}}
+RESULT: {output=根据报告编号 CR-dcc9abc8，客户 C1001 的征信记录良好，信用评分 735，过去 24 个月内无逾期。建议继续进行贷前审批流程。, result_type=answer}
+
 ```
 
-每次运行的随机报告编号及模型回答措辞会变化；验收不匹配固定编号或固定回答。
-
-同日再通过统一回归入口执行，输出为：
-
-```text
-[PASS] 20_java_nested_agents        (79.5s)
-
-===== 汇总: 1/1 通过 =====
-```
-
-本次仅回归新增的 20，未重跑未修改的 01–19。
+完整摘录见 [verification-output.txt](verification-output.txt)。`mvn -Preal-model test` 实测 **6 个测试通过（5 个单元测试、1 个真实模型集成测试），失败/错误/跳过均为 0**。每次运行的报告编号和回答措辞会变化，不使用保存的模型输出代替执行。
 
 ## 注意点
 

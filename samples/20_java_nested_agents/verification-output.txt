@@ -1,16 +1,5 @@
-SDK: com.openjiuwen:agent-core-java:0.1.16
-MODEL: google/gemma-4-e4b
-ENTER credit_master
-CALL  credit_master -> risk_officer
-ENTER risk_officer
-CALL  risk_officer -> credit_checker
-ENTER credit_checker
-CALL  credit_checker -> query_credit_record
-DATA  customer=C1001 report_id=CR-2ca87ea7
-EXIT  credit_checker
-EXIT  risk_officer
-EXIT  credit_master
-RESULT: {output=根据报告编号 CR-2ca87ea7，客户 C1001 的征信记录良好，信用评分 735，过去 24 个月内无逾期。建议继续进行后续的贷前审批流程。, result_type=answer}
 NESTING: [enter:credit_master, enter:risk_officer, enter:credit_checker, exit:credit_checker, exit:risk_officer, exit:credit_master]
+CALLS: [credit_master -> risk_officer, risk_officer -> credit_checker, credit_checker -> query_credit_record]
 MODEL_CALLS: {credit_master=2, risk_officer=2, credit_checker=2}
-SUCCESS: Java 三层 Agent 委派、真实模型调用和报告编号逐级回传验收通过
+TOOL_ARGUMENTS: {credit_master -> risk_officer={"query":"请对客户 C1001 做贷前征信核查，给出简短审查建议并注明报告编号。"}, credit_checker -> query_credit_record={"customer_id":"C1001"}, risk_officer -> credit_checker={"query":"请对客户 C1001 进行贷前征信核查，并给出简短审查建议。"}}
+RESULT: {output=根据报告编号 CR-dcc9abc8，客户 C1001 的征信记录良好，信用评分 735，过去 24 个月内无逾期。建议继续进行贷前审批流程。, result_type=answer}

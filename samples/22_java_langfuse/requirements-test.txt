@@ -1,0 +1,2 @@
+# 仅测试目录的 OTLP/protobuf 集成验收使用；正常 Java 应用不需要。
+opentelemetry-proto==1.45.1

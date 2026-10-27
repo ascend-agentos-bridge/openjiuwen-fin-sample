@@ -1,4 +1,4 @@
-"""样例 20 的回归入口；Agent 及模型调用全部由官方 Java SDK 执行。"""
+"""演示入口：仅启动 Java 业务主程序，调用真实模型。"""
 import os
 from pathlib import Path
 import shutil
