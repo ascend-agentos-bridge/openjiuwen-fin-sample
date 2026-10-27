@@ -1,0 +1,4 @@
+首次结果: interrupt
+审批通过，恢复原会话
+异常处理: BANK_BUSY，重试一次
+恢复结果: {output=贷款已发放，参考编号为 DEMO-LOAN-001。, result_type=answer}

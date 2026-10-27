@@ -28,7 +28,7 @@
 ## 工程约定
 
 - 场景统一银行金融（信贷、风控、客服等），保持单文件单特性，不过度复杂；
-- 每个 sample 独立文件夹，含 `main.py` + `README.md`（场景/代码详解/运行方式/验收方式/实测输出/注意点），README 要让开发者直观看到运行效果；
+- 每个 sample 独立文件夹，Python 样例含 `main.py` + `README.md`；Java 样例使用 `pom.xml` + `src/main/java/` 下的 Java 入口，不额外添加 Python 启动器，验收代码放在 `src/test/java/`。README 包含场景/代码详解/运行方式/验收方式/实测输出/注意点，让开发者直观看到运行效果；
 - 每个 sample 的 README 标注其依赖的 openjiuwen Agent Core 版本，且必须基于最新 release 开发；
 - 根目录维护 openjiuwen Agent Core 面向开发者的全量特性清单（`FEATURES.md`），每个特性对应一个样例目录，作为样例索引；
 - `run_all_samples.py` 一键回归，退出码非 0 即失败；

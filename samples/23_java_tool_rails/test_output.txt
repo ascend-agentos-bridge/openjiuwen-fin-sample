@@ -1,0 +1,18 @@
+-------------------------------------------------------------------------------
+Test set: CreditToolRailsTest
+-------------------------------------------------------------------------------
+Tests run: 23, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.315 s -- in CreditToolRailsTest
+
+-------------------------------------------------------------------------------
+Test set: CreditToolRailsIntegrationTest
+-------------------------------------------------------------------------------
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 31.56 s -- in CreditToolRailsIntegrationTest
+
+真实模型验收（拒绝）: {output=根据系统返回结果，该笔贷款申请被拒绝，未执行放款。, result_type=answer}
+
+异常处理: BANK_BUSY，重试一次
+真实模型验收（批准）: {output=贷款已发放给客户 C1001，金额为 50000 元。, result_type=answer}
+
+[PASS] 23_java_tool_rails           (33.7s)
+
+===== 汇总: 1/1 通过 =====

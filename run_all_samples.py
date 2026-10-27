@@ -1,9 +1,10 @@
-"""一键回归: 顺序运行 samples/ 下全部样例，统计退出码并输出汇总。
+"""一键回归: 纯 Maven 样例直接运行 JUnit；旧样例保留 Python 入口，按退出码汇总。
 
 用法:
     python run_all_samples.py          # 跑全部
     python run_all_samples.py 01 06    # 只跑指定编号
 """
+import os
 import subprocess
 import sys
 import time
@@ -15,15 +16,20 @@ ROOT = Path(__file__).resolve().parent
 def main() -> int:
     args = {a.zfill(2) for a in sys.argv[1:]}
     samples = sorted(p for p in (ROOT / "samples").iterdir()
-                     if p.is_dir() and (p / "main.py").exists())
+                     if p.is_dir() and ((p / "main.py").is_file() or (p / "pom.xml").is_file()))
     if args:
         samples = [p for p in samples if p.name[:2] in args]
 
     results: list[tuple[str, int, float]] = []
     for sample in samples:
+        if (sample / "pom.xml").is_file() and not (sample / "main.py").is_file():
+            command = [os.getenv("MAVEN_CMD", "mvn"), "-q", "--batch-mode", "-Preal-model", "test"]
+        else:
+            entry = "test.py" if (sample / "test.py").exists() else "main.py"
+            command = [sys.executable, "-X", "utf8", entry]
         t0 = time.time()
         proc = subprocess.run(
-            [sys.executable, "-X", "utf8", "main.py"],
+            command,
             cwd=sample, capture_output=True, text=True, encoding="utf-8",
             errors="replace")
         elapsed = time.time() - t0
