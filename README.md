@@ -1,12 +1,12 @@
 # openjiuwen-sample：Agent 业务开发样例（银行信贷场景）
 
-做业务系统的人想给信贷、风控、客服这类系统加 Agent 功能（自动查档、跑审批、生成意见、多轮对话）时，可以照这个仓库的样例写。19 个 Python 样例使用开源 openjiuwen Agent Core 官方 API，适配 `openjiuwen==0.1.16`；另有 5 个 Java 样例，演示三层子智能体委派、完整调用链日志、Langfuse 对接、自定义工具 Rail 和 KV Cache 亲和开关，适配 `com.openjiuwen:agent-core-java:0.1.16`。一个特性一个文件夹，配套 README 写清楚运行前提、代码讲解、验收方式和实测输出。完整索引见 [FEATURES.md](FEATURES.md)。
+做业务系统的人想给信贷、风控、客服这类系统加 Agent 功能（自动查档、跑审批、生成意见、多轮对话）时，可以照这个仓库的样例写。Python 样例使用开源 openjiuwen Agent Core 官方 API（01–19 适配 `openjiuwen==0.1.16`，26 适配 `openjiuwen==0.1.20`）；另有 5 个 Java 样例，演示三层子智能体委派、完整调用链日志、Langfuse 对接、自定义工具 Rail 和 KV Cache 亲和开关，适配 `com.openjiuwen:agent-core-java:0.1.16`。一个特性一个文件夹，配套 README 写清楚运行前提、代码讲解、验收方式和实测输出。完整索引见 [FEATURES.md](FEATURES.md)。
 
 样例只 import 官方包，仓库里没有自封装的第二套 API。觉得框架接口不好用，按 [AGENTS.md](AGENTS.md) 的约定去 agent-core 仓库提 Issue / PR，把改进做进框架本体。
 
 | SDK 版本 | 样例范围 | 依赖与入口 | 开发指南 |
 |---|---|---|---|
-| Python 版 Agent Core | 01–19 | `openjiuwen==0.1.16`，`main.py` | 本文下方的 Python 说明 |
+| Python 版 Agent Core | 01–19、26 | `openjiuwen==0.1.16`（01–19）/ `0.1.20`（26），`main.py` | 本文下方的 Python 说明 |
 | Java 版 Agent Core | 20–24 | `com.openjiuwen:agent-core-java:0.1.16`，Java `main` / Maven | [Java 版 README](README-JAVA.md) |
 
 两套 SDK 的项目结构和 API 分别以对应语言的官方示例为准。Java 开发者从 [Java 指南](README-JAVA.md) 的样例 23 开始，无需安装 Python 版 `openjiuwen`。
@@ -50,7 +50,7 @@ python main.py
 
 Python 开发从 01 开始，Java 开发从 23 开始，再按对应语言和业务场景选择。
 
-### Python SDK：01–19
+### Python SDK：01–19、26
 
 | 样例 | 业务场景 | 对应能力 |
 |---|---|---|
@@ -73,6 +73,7 @@ Python 开发从 01 开始，Java 开发从 23 开始，再按对应语言和业
 | [17 evaluation_optimizer](samples/17_evaluation_optimizer/) | 让 LLM 当裁判，按规则给 Agent 的回答打分 | LLM-as-Judge 评测 |
 | [18 mcp_tools](samples/18_mcp_tools/) | 信贷工具封装成标准 MCP 服务，其他进程也能调 | MCP 工具协议 |
 | [19 skill_use](samples/19_skill_use/) | 贷前审查规范写成 SKILL.md，Agent 按需读取技能并遵循执行 | Agent Skill：注册技能 + 提示注入 + 按需装载 |
+| [26 ask_user_credit](samples/26_ask_user_credit/) | 客户只说要装修贷款，Agent 先问清金额和期限，再给预审意见 | 人机交互：`ask_user` 结构化提问 + 中断恢复 |
 
 ### Java SDK：20–24
 
@@ -106,7 +107,7 @@ python run_all_samples.py 01 06    # 只跑指定编号
 ## 验收口径
 
 - Java 样例 20–22 的 main 只展示业务用法，验收断言位于独立测试目录；23–24 使用纯 Maven 入口运行 JUnit。回归脚本按测试退出码判断，非 0 即失败；
-- 各 README 的“实测输出”来自真实运行，不是手写效果图（本地网关实测过 qwen3-4b-thinking、qwen3.5-9b、gemma-4-e2b，各样例 README 标注自己用的模型）；
+- 各 README 的“实测输出”来自真实运行，不是手写效果图（本地网关实测过 qwen3-4b-thinking、qwen3.5-9b、gemma-4-e2b、gemma-4-e4b，各样例 README 标注自己用的模型）；
 - LLM 输出有随机性，断言只锚结构性事实：工具是否被调用、状态机走向、分数区间，不断言具体措辞；
 - 升级 openjiuwen 或换模型后跑一遍回归，把受影响样例的实测输出同步更新。
 
@@ -122,7 +123,7 @@ harness 级的 DeepAgent、RL 训练这类能力没有放进样例。Java 三层
 openjiuwen-sample/
 ├── README.md               仓库总览与 Python 版说明
 ├── README-JAVA.md          Java 版 SDK、运行、验收与目录说明
-├── samples/               Python 01–19、Java 20–24
+├── samples/               Python 01–19、26，Java 20–24
 ├── benchmarks/            Java 亲和 benchmark、逐请求统计与结论报告
 ├── FEATURES.md            两套 SDK 的样例索引
 ├── run_all_samples.py      可选的跨语言回归调度脚本
@@ -130,7 +131,7 @@ openjiuwen-sample/
 └── AGENTS.md               仓库约束：只用官方 API、不本地封装、锁最新 release
 ```
 
-Python 样例结构（01–19）：
+Python 样例结构（01–19、26）：
 
 ```text
 samples/01_hello_react_agent/
