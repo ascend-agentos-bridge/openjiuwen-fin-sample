@@ -1,0 +1,11 @@
+<configuration>
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%level %logger{24} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    <!-- 交互样例只保留告警，避免框架 INFO 日志淹没客户问答与预审意见。 -->
+    <root level="WARN">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>
