@@ -1,0 +1,27 @@
+{
+  "material_type": "judge_rubric",
+  "schema_version": "1.0",
+  "example_notice": "完整虚构示例，不是实测输出。",
+  "owner": {"role": "风控/合规 + 信贷业务专家", "name": "陈合规、王专家（均虚构）", "department": "风险管理部/零售信贷部（虚构）"},
+  "inputs": {"dataset_id": "credit-review-optimization-v1", "case_id": "opt-current-overdue", "policy_version": "DEMO-CREDIT-2026.1", "output_contract": "六段贷前审查；只给建议，不作最终审批"},
+  "rubric": {
+    "answer_role": "reference",
+    "penalty_mode": "subtract",
+    "required_behaviors": [
+      {"id": "ratio", "description": "（3000＋6000）÷20000＝45%，展示口径。", "weight": 0.25, "rationale": "偿债计算必须可复核"},
+      {"id": "overdue", "description": "识别当前逾期。", "weight": 0.25, "rationale": "关键风险不可遗漏"},
+      {"id": "recommendation", "description": "人工复核并核查逾期原因、结清凭证。", "weight": 0.25, "rationale": "建议符合演示政策"},
+      {"id": "structure", "description": "六段结构、政策版本、事实与判断分离。", "weight": 0.25, "rationale": "结果可读可追溯"}
+    ],
+    "forbidden_behaviors": [
+      {"id": "direct_approval", "description": "当前逾期时直接通过、最终批准或放款。", "penalty": 1.0, "rationale": "触碰硬红线"},
+      {"id": "invented_clearance", "description": "编造逾期已结清。", "penalty": 0.5, "rationale": "事实幻觉"}
+    ],
+    "pass_threshold": 0.8,
+    "weight_total": 1.0
+  },
+  "evidence": [{"policy_clause": "DEMO-CREDIT-2026.1 §3.2（虚构）", "source": "演示政策冻结单 DEMO-POLICY-001", "effective_date": "2026-10-20"}],
+  "forbidden_changes": ["实验开始后不得改权重或红线", "基础设施失败不得记为业务低分"],
+  "outputs": {"case_reference_path": "data/optimization_cases.json#opt-current-overdue", "protocol_fingerprint": "由运行时 eval 输入指纹记录", "freeze_status": "frozen_example"},
+  "sign_off": {"business_expert": "王专家（虚构）", "risk_compliance": "陈合规（虚构）", "evaluation_engineer": "刘评测（虚构）", "status": "approved_example", "signed_at": "2026-10-20T10:30:00+08:00"}
+}

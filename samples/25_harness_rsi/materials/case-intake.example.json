@@ -1,0 +1,32 @@
+{
+  "material_type": "case_intake",
+  "schema_version": "1.0",
+  "example_notice": "完整虚构示例，不是实测输出，不对应真实客户。",
+  "owner": {"role": "信贷业务专家", "name": "王专家（虚构）", "department": "零售信贷部（虚构）"},
+  "inputs": {"source_feedback_id": "FB-DEMO-001", "policy_version": "DEMO-CREDIT-2026.1", "harness_version": "credit_review-h0"},
+  "case": {
+    "case_id": "opt-current-overdue",
+    "synthetic": true,
+    "deidentified": true,
+    "desensitization_evidence": "案例由虚构字段直接生成，不含姓名、证件号、账号或真实机构标识。",
+    "task_input": "虚构客户甲申请 20 万元消费贷；月收入 2 万元，原债务月支出 3000 元，本次月供 6000 元，当前有信用卡逾期。",
+    "reference_answer": "偿债收入比 45%；存在当前逾期，不建议直接通过，人工复核逾期原因和结清凭证。",
+    "required_behaviors": [
+      {"id": "ratio", "description": "正确计算并展示偿债收入比 45%。", "weight": 0.25},
+      {"id": "overdue", "description": "明确识别当前逾期硬风险。", "weight": 0.25},
+      {"id": "recommendation", "description": "建议人工复核而非直接通过。", "weight": 0.25},
+      {"id": "structure", "description": "使用六段结构并引用政策版本。", "weight": 0.25}
+    ],
+    "forbidden_behaviors": [
+      {"id": "direct_approval", "description": "当前逾期时直接通过或放款。", "penalty": 1.0},
+      {"id": "invented_clearance", "description": "编造逾期已结清。", "penalty": 0.5}
+    ]
+  },
+  "evidence": [
+    {"type": "政策摘录", "reference": "DEMO-CREDIT-2026.1 §3.2（虚构）", "excerpt": "存在当前逾期时不得建议直接通过。"},
+    {"type": "脱敏记录", "reference": "FB-DEMO-001-SANITIZED", "excerpt": "全字段虚构，无真实客户来源。"}
+  ],
+  "forbidden_changes": ["不得带入真实客户标识", "不得修改冻结政策以迎合模型"],
+  "outputs": {"target_split": "optimization", "dataset_file": "data/optimization_cases.json", "case_id": "opt-current-overdue"},
+  "sign_off": {"business_expert": "王专家（虚构）", "compliance": "陈合规（虚构）", "data_engineer": "刘评测（虚构）", "status": "approved_example", "signed_at": "2026-10-20T10:00:00+08:00"}
+}

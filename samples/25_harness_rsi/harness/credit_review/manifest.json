@@ -1,0 +1,23 @@
+{
+  "package_type": "plugin",
+  "id": "credit_review",
+  "name": "贷前审查",
+  "description": "基于给定事实形成贷前审查建议，不代替有权审批人。",
+  "prompt_sections": [
+    {
+      "file": "prompt_sections/credit_review.md",
+      "priority": 30
+    }
+  ],
+  "skills": [
+    {
+      "dir": "./skills/pre_loan_review",
+      "mode": "all"
+    }
+  ],
+  "metadata": {
+    "scenario": "fictional_pre_loan_review",
+    "policy_version": "DEMO-CREDIT-2026.1",
+    "optimizable_surfaces": ["prompt", "skill"]
+  }
+}

@@ -1,0 +1,9 @@
+model:
+  model_client_config:
+    client_provider: openai
+    api_key: ${API_KEY}
+    api_base: ${API_BASE}
+    max_retries: 0
+    timeout: 300
+  model_request_config:
+    model: ${MODEL_NAME}

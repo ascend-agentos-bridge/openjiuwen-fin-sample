@@ -1,0 +1,27 @@
+material_type: optimization_charter
+schema_version: "1.0"
+example_notice: "完整虚构示例，不代表已执行真实优化。"
+owner: {role: "业务负责人 + 风控/合规 + Agent 开发者", name: "吴业务、陈合规、赵开发（均虚构）", department: "信贷与风控联合小组（虚构）"}
+inputs:
+  initial_harness_refs: "harness/harness_refs.yaml"
+  optimization_dataset: "data/optimization_cases.json#credit-review-optimization-v1"
+  holdout_dataset: "data/holdout_cases.json#credit-review-holdout-v1"
+  judge_protocol: "llm_as_judge / continuous / answer_role=reference / penalty_mode=subtract"
+  policy_version: DEMO-CREDIT-2026.1
+scope:
+  editable_surfaces: [prompt, skill]
+  allowed_paths: ["prompt_sections/**", "skills/**"]
+  max_epochs: 1
+  batch_size: 2
+  model_budget: "单并发；最多 1 个 epoch；企业运行前由成本负责人另批预算"
+  promotion_threshold: 0.05
+  non_target_max_regression: 0.05
+forbidden_changes: ["Tool", "Rail", "Config", "生产信贷政策", "审批权限", "放款规则"]
+evidence:
+  required_artifacts: [baseline_eval_ref, issues, candidate_diff, target_gate, full_replay, holdout_report]
+  no_improvement_policy: "保留基线且不发布；不要求随机提分"
+  infrastructure_failure_policy: "停止候选归因与发布；修复后新建或按指纹恢复任务"
+  holdout_policy: "不传给 orchestrator；基线与最终版本分别复验"
+  path_diff_policy: "除 Prompt/Skill 及其 manifest 同步字段外，任何变化均拒绝"
+outputs: {task_id: "DOC-EXAMPLE-NOT-A-RUN", run_directory: "runs/<真实-task-id>/", report: "runs/<真实-task-id>/single_harness_report.yaml", final_harness_refs: "published 非空则用 published，否则保留基线"}
+sign_off: {business_owner: "吴业务（虚构）", risk_compliance: "陈合规（虚构）", developer: "赵开发（虚构）", status: approved_example, signed_at: "2026-10-20T11:30:00+08:00"}

@@ -53,6 +53,11 @@ class SampleRunnerTest(unittest.TestCase):
         self.assertEqual(0, status)
         self.assertEqual([sys.executable, "-X", "utf8", "main.py"], command)
 
+    def test_prefers_independent_tests_over_business_entrypoint(self):
+        status, command, _ = self.run_sample(["main.py", "test.py"])
+        self.assertEqual(0, status)
+        self.assertEqual([sys.executable, "-X", "utf8", "test.py"], command)
+
 
 if __name__ == "__main__":
     unittest.main()

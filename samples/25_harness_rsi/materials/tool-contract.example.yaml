@@ -1,0 +1,37 @@
+material_type: tool_contract
+schema_version: "1.0"
+example_notice: "完整虚构示例；样例 25 的输入已内嵌案例事实，并未注册此虚构工具。"
+owner: {role: "Agent 开发者 + 工具系统负责人", name: "赵开发、孙系统（均虚构）", department: "Agent 平台组/征信系统组（虚构）"}
+inputs:
+  tool_id: query_credit_demo
+  tool_version: "demo-1.0"
+  owner_system: "虚构征信服务平台"
+  purpose: "按脱敏客户令牌查询当前逾期与月债务汇总"
+contract:
+  input_schema:
+    type: object
+    required: [customer_token]
+    properties: {customer_token: {type: string, description: "脱敏令牌，不是证件号"}}
+  output_schema:
+    type: object
+    required: [query_status, current_overdue, monthly_debt_payment, data_as_of]
+    properties:
+      query_status: {type: string, enum: [ok, not_found, unavailable]}
+      current_overdue: {type: [boolean, "null"], description: "空值表示未知，不等于无逾期"}
+      monthly_debt_payment: {type: [number, "null"], description: "单位元；空值表示缺失，不等于零"}
+      data_as_of: {type: string, format: date}
+  null_semantics: "未知或缺失；Agent 必须列为待补材料，禁止按 false/0 处理"
+  error_codes: {NOT_FOUND: "无档案，转人工核查", TIMEOUT: "基础设施失败，不进入业务失败归因", FORBIDDEN: "权限不足，停止调用"}
+  timeout_sec: 10
+  idempotency: "只读查询，可按 customer_token + data_as_of 重试"
+  data_classification: "企业敏感；仅使用脱敏令牌，禁止日志记录原始客户标识"
+  permissions: "贷前审查只读角色；无审批、无放款权限"
+  read_only_in_this_experiment: true
+evidence:
+  interface_document: "DOC-DEMO-TOOL-001（虚构）"
+  example_request_reference: "examples/query_credit_demo_request.json（虚构路径示例）"
+  example_response_reference: "examples/query_credit_demo_response.json（虚构路径示例）"
+  contract_test_reference: "CONTRACT-TEST-DEMO-001（虚构）"
+forbidden_changes: ["本轮不得修改 Tool 实现、权限、超时或返回语义", "不得用工具结果替代有权审批"]
+outputs: {harness_manifest_reference: "本样例不注册；企业接入时由开发者加入 manifest.tools", case_input_mapping: "customer_token 仅来自脱敏案例", consumer: "Agent 开发者/评测工程师"}
+sign_off: {developer: "赵开发（虚构）", tool_owner: "孙系统（虚构）", risk_compliance: "陈合规（虚构）", status: approved_example, signed_at: "2026-10-20T11:00:00+08:00"}

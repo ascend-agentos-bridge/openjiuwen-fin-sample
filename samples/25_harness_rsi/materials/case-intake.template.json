@@ -1,0 +1,20 @@
+{
+  "material_type": "case_intake",
+  "schema_version": "1.0",
+  "owner": {"role": "信贷业务专家", "name": "", "department": ""},
+  "inputs": {"source_feedback_id": "", "policy_version": "", "harness_version": ""},
+  "case": {
+    "case_id": "",
+    "synthetic": null,
+    "deidentified": null,
+    "desensitization_evidence": "",
+    "task_input": "",
+    "reference_answer": "",
+    "required_behaviors": [{"id": "", "description": "", "weight": null}],
+    "forbidden_behaviors": [{"id": "", "description": "", "penalty": null}]
+  },
+  "evidence": [{"type": "政策摘录/原失败轨迹/脱敏记录", "reference": "", "excerpt": ""}],
+  "forbidden_changes": ["不得带入真实客户标识", "不得修改冻结政策以迎合模型"],
+  "outputs": {"target_split": "optimization 或 holdout", "dataset_file": "", "case_id": ""},
+  "sign_off": {"business_expert": "", "compliance": "", "data_engineer": "", "status": "draft", "signed_at": ""}
+}

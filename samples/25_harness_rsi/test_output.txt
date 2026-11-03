@@ -1,0 +1,27 @@
+[FAIL] 25_harness_rsi                   (446.8s)  <-- 见下方输出
+cts)', '二、 计算结果 (Calculations)', and cites the policy in the analysis section: ...citing DEMO-CREDIT-2026.1.\"}], \"forbidden_hits\": [{\"id\": \"invented_risk\", \"triggered\": false, \"reason\": \"The response adhered to the facts provided (no overdue status, materials complete).\", \"evidence\": \"Case Facts: ...\\\\n*   Current Overdue Status: None ($\\\\text{无当前逾期}$). \\\\n*   Material Completeness: Complete ($\\\\text{材料完整}$).\"}, {\"id\": \"final_approval\", \"triggered\": false, \"reason\": \"The response provided a 'Direct Pass' recommendation subject to manual review points, rather than an absolute final approval/disbursement.\", \"evidence\": \"The response includes a section: **五、 人工复核要点 (Key Points for Manual Review)**.\"}]}", "is_stream": false}
+2026-11-03 14:38:33 | llm | default_trace_id | INFO | {"event_id": "829b96e2-24d9-4350-ba1c-83f7f5127d25", "event_type": "llm_call_end", "log_level": "INFO", "timestamp": "2026-11-03T14:38:33.936814+08:00", "module_type": "llm", "module_id": "llm", "module_name": "llm", "status": "success", "message": "Before parse content with parser config.", "metadata": {"parser": "None"}, "model_name": "google/gemma-4-e4b", "model_provider": "OpenAI", "is_stream": false}
+2026-11-03 14:38:33 | common | default_trace_id | INFO | legacy workspace scratch removed: /Users/tianxiaoliang/codespace/openjiuwen-fin-sample/samples/25_harness_rsi/runs/credit-rsi-ut-20261103T063112302358Z/evaluations/frozen_baseline/cases/c004_787f7b8f/workspace
+
+12/site-packages/openjiuwen/rsi/harness_rsi/single_harness/iterative.py", line 220, in run
+    return await self._run(request, on_event=on_event)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/tianxiaoliang/codespace/openjiuwen-fin-sample/.venv/lib/python3.12/site-packages/openjiuwen/rsi/harness_rsi/single_harness/iterative.py", line 369, in _run
+    return await run_continuous(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/tianxiaoliang/codespace/openjiuwen-fin-sample/.venv/lib/python3.12/site-packages/openjiuwen/rsi/harness_rsi/single_harness/continuous.py", line 153, in run_continuous
+    contexts = baseline_contexts(reference_eval, all_cases) if compare else None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/tianxiaoliang/codespace/openjiuwen-fin-sample/.venv/lib/python3.12/site-packages/openjiuwen/rsi/harness_rsi/evaluator/baseline_context.py", line 119, in baseline_contexts
+    context.validate(case)
+  File "/Users/tianxiaoliang/codespace/openjiuwen-fin-sample/.venv/lib/python3.12/site-packages/openjiuwen/rsi/harness_rsi/evaluator/baseline_context.py", line 80, in validate
+    raise EvaluationInfrastructureError("Baseline is missing its original judged-artifact manifest")
+openjiuwen.rsi.harness_rsi.evaluator.errors.EvaluationInfrastructureError: Baseline is missing its original judged-artifact manifest
+
+----------------------------------------------------------------------
+Ran 14 tests in 445.096s
+
+FAILED (errors=1)
+
+
+===== 汇总: 0/1 通过 =====

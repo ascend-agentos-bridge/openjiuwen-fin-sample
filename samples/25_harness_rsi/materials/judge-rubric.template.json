@@ -1,0 +1,18 @@
+{
+  "material_type": "judge_rubric",
+  "schema_version": "1.0",
+  "owner": {"role": "风控/合规 + 信贷业务专家", "name": "", "department": ""},
+  "inputs": {"dataset_id": "", "case_id": "", "policy_version": "", "output_contract": ""},
+  "rubric": {
+    "answer_role": "reference",
+    "penalty_mode": "subtract",
+    "required_behaviors": [{"id": "", "description": "", "weight": null, "rationale": ""}],
+    "forbidden_behaviors": [{"id": "", "description": "", "penalty": null, "rationale": ""}],
+    "pass_threshold": null,
+    "weight_total": null
+  },
+  "evidence": [{"policy_clause": "", "source": "", "effective_date": ""}],
+  "forbidden_changes": ["实验开始后不得改权重或红线", "基础设施失败不得记为业务低分"],
+  "outputs": {"case_reference_path": "", "protocol_fingerprint": "", "freeze_status": "draft"},
+  "sign_off": {"business_expert": "", "risk_compliance": "", "evaluation_engineer": "", "status": "draft", "signed_at": ""}
+}

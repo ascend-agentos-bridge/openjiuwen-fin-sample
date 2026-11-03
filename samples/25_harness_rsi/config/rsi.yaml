@@ -1,0 +1,63 @@
+workspace_dir: runs/workspace
+max_epochs: 1
+
+model_configs:
+  evaluation: config/model.yaml
+  analysis: config/model.yaml
+  member_optimization: config/model.yaml
+
+data_loader:
+  file_pattern: "*.json"
+  batch_size: 2
+  batch_balance_keys: [dimension, difficulty, source, task_type]
+
+evaluator:
+  backend: single_harness
+  evaluation_method: llm_as_judge
+  score_mode: continuous
+  solver_max_iterations: 8
+  solver_on_max_iterations: error
+  solver_max_iterations_hard_limit: 8
+  judge_agent_max_iterations: 8
+  judge_timeout_sec: 300
+  judge_max_retries: 1
+  transient_case_retry_limit: 1
+  output_repair:
+    max_attempts: 2
+    max_stagnant_attempts: 1
+
+evaluation_result_analyzer:
+  diagnosis_agent_max_retries: 1
+  diagnosis_agent_max_concurrency: 1
+  diagnosis_agent_max_iterations: 8
+  max_issues: 4
+  evidence_limit_per_issue: 2
+  output_repair:
+    max_attempts: 2
+    max_stagnant_attempts: 1
+
+member_optimizer:
+  # 样例意图：只提供并审查 Prompt/Skill；0.1.20 控制面白名单事实见 README。
+  action_group_configs: [prompt, skill]
+  max_roles_per_run: 1
+  max_actions_per_plan: 2
+  max_issue_attempts_per_batch: 1
+  max_repair_rounds_per_batch: 1
+  action_planning_max_attempts: 3
+  execution_concurrency: 1
+  role_execution_concurrency: 1
+  action_execution_concurrency_per_role: 1
+  sibling_candidate_count: 1
+  output_repair:
+    max_attempts: 2
+    max_stagnant_attempts: 1
+
+scheduling:
+  evaluation_strategy: hybrid
+  coordination_strategy: team_first_single_pass
+  full_evaluation_enabled: true
+
+promotion:
+  policy_version: continuous_two_stage_v2
+  min_improvement: 0.05
+  non_target_max_regression: 0.05

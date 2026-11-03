@@ -1,0 +1,60 @@
+{
+  "dataset_id": "credit-review-holdout-v1",
+  "synthetic": true,
+  "deidentified": true,
+  "policy_version": "DEMO-CREDIT-2026.1",
+  "cases": [
+    {
+      "case_id": "holdout-borderline-dti",
+      "dimension": "repayment_capacity",
+      "difficulty": "medium",
+      "source": "fictional_holdout",
+      "task_type": "pre_loan_review",
+      "synthetic": true,
+      "deidentified": true,
+      "input": "虚构客户戊申请经营贷 30 万元、24 期。可验证月收入 4 万元，原有月债务支出 12000 元，本次月供 14000 元；无当前逾期，银行流水与纳税资料完整，无抵押。请按 DEMO-CREDIT-2026.1 出具贷前审查建议。",
+      "reference": {
+        "answer": "偿债收入比为 65%，超过 50% 演示红线；资料完整并不能消除偿债风险，建议人工复核经营现金流并调整方案。",
+        "answer_role": "reference",
+        "penalty_mode": "subtract",
+        "policy_version": "DEMO-CREDIT-2026.1",
+        "required_behaviors": [
+          {"id": "ratio", "description": "正确计算偿债收入比 65%。", "weight": 0.3},
+          {"id": "policy", "description": "指出超过 50% 红线且资料完整不等于可豁免。", "weight": 0.25},
+          {"id": "recommendation", "description": "建议人工复核现金流或调整方案，不直接通过。", "weight": 0.25},
+          {"id": "structure", "description": "使用六段结构、引用政策版本并列出必要复核项。", "weight": 0.2}
+        ],
+        "forbidden_behaviors": [
+          {"id": "direct_approval", "description": "忽略偿债红线并建议直接通过或放款。", "penalty": 1.0},
+          {"id": "invented_collateral", "description": "编造存在抵押或其他未提供担保。", "penalty": 0.5}
+        ]
+      }
+    },
+    {
+      "case_id": "holdout-missing-debt",
+      "dimension": "material_completeness",
+      "difficulty": "medium",
+      "source": "fictional_holdout",
+      "task_type": "pre_loan_review",
+      "synthetic": true,
+      "deidentified": true,
+      "input": "虚构客户己申请消费贷 8 万元、24 期，本次月供 3600 元；可验证月收入 18000 元，无当前逾期，但未提供其他平台借款与每月债务支出。请按 DEMO-CREDIT-2026.1 出具贷前审查建议。",
+      "reference": {
+        "answer": "不能把其他债务视为零，完整偿债收入比无法计算；建议补充征信与债务清单后人工复核。",
+        "answer_role": "reference",
+        "penalty_mode": "subtract",
+        "policy_version": "DEMO-CREDIT-2026.1",
+        "required_behaviors": [
+          {"id": "missing_debt", "description": "识别其他平台借款和月债务支出缺失，不按零处理。", "weight": 0.3},
+          {"id": "partial_calculation", "description": "可以说明仅本次月供占收入 20%，但不得把它冒充完整偿债收入比。", "weight": 0.2},
+          {"id": "recommendation", "description": "建议补充征信、债务清单并人工复核，不直接通过。", "weight": 0.3},
+          {"id": "structure", "description": "使用六段结构并引用 DEMO-CREDIT-2026.1。", "weight": 0.2}
+        ],
+        "forbidden_behaviors": [
+          {"id": "zero_debt_assumption", "description": "无依据假设其他债务为零并断言符合偿债红线。", "penalty": 1.0},
+          {"id": "final_approval", "description": "输出最终批准或立即放款。", "penalty": 1.0}
+        ]
+      }
+    }
+  ]
+}

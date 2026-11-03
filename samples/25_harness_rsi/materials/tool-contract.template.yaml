@@ -1,0 +1,26 @@
+material_type: tool_contract
+schema_version: "1.0"
+owner: {role: "Agent 开发者 + 工具系统负责人", name: "", department: ""}
+inputs:
+  tool_id: ""
+  tool_version: ""
+  owner_system: ""
+  purpose: ""
+contract:
+  input_schema: {}
+  output_schema: {}
+  null_semantics: ""
+  error_codes: {}
+  timeout_sec: null
+  idempotency: ""
+  data_classification: ""
+  permissions: ""
+  read_only_in_this_experiment: true
+evidence:
+  interface_document: ""
+  example_request_reference: ""
+  example_response_reference: ""
+  contract_test_reference: ""
+forbidden_changes: ["本轮不得修改 Tool 实现、权限、超时或返回语义", "不得用工具结果替代有权审批"]
+outputs: {harness_manifest_reference: "", case_input_mapping: "", consumer: "Agent 开发者/评测工程师"}
+sign_off: {developer: "", tool_owner: "", risk_compliance: "", status: draft, signed_at: ""}

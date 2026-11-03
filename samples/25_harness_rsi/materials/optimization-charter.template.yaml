@@ -1,0 +1,24 @@
+material_type: optimization_charter
+schema_version: "1.0"
+owner: {role: "业务负责人 + 风控/合规 + Agent 开发者", name: "", department: ""}
+inputs:
+  initial_harness_refs: ""
+  optimization_dataset: ""
+  holdout_dataset: ""
+  judge_protocol: ""
+  policy_version: ""
+scope:
+  editable_surfaces: [prompt, skill]
+  allowed_paths: ["prompt_sections/**", "skills/**"]
+  max_epochs: null
+  batch_size: null
+  model_budget: ""
+  promotion_threshold: null
+  non_target_max_regression: null
+forbidden_changes: ["Tool", "Rail", "Config", "生产信贷政策", "审批权限", "放款规则"]
+evidence:
+  required_artifacts: [baseline_eval_ref, issues, candidate_diff, target_gate, full_replay, holdout_report]
+  no_improvement_policy: "保留基线且不发布"
+  infrastructure_failure_policy: "停止候选归因与发布"
+outputs: {task_id: "", run_directory: "", report: "", final_harness_refs: ""}
+sign_off: {business_owner: "", risk_compliance: "", developer: "", status: draft, signed_at: ""}
