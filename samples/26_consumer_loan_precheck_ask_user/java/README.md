@@ -14,7 +14,7 @@ Agent 不自己假设，先通过内置 `ask_user` 工具向客户一次性问�
 ## 目录结构
 
 ```text
-samples/consumer_loan_precheck/java/
+samples/26_consumer_loan_precheck_ask_user/java/
 ├── pom.xml                                        依赖 agent-core-java 0.1.16 + JUnit 5，release 17
 ├── src/main/java/ConsumerLoanPrecheck.java        业务入口：规则工具、Agent、一次预审对话、终端问答
 ├── src/main/resources/logback-consumer-loan.xml   框架日志压到 WARN，保证交互输出可读
@@ -45,7 +45,7 @@ samples/consumer_loan_precheck/java/
 ## 构建与运行
 
 ```bash
-cd samples/consumer_loan_precheck/java
+cd samples/26_consumer_loan_precheck_ask_user/java
 mvn -q compile          # 首次构建（exec:java 不负责编译）
 mvn -q compile exec:java
 ```
@@ -108,7 +108,7 @@ mvn -q compile exec:java
 ## JUnit 验收
 
 ```bash
-cd samples/consumer_loan_precheck/java
+cd samples/26_consumer_loan_precheck_ask_user/java
 mvn -q test              # 默认就包含真实模型集成测试（需要网关可用）
 # 仓库回归脚本使用的等价命令：
 mvn -q -Preal-model test

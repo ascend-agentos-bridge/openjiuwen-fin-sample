@@ -15,7 +15,7 @@
 
 3. **只用最新 release 版本**。样例以开源 openjiuwen Agent Core 的最新 release 为准：
    - 运行样例前先确认版本：`python -c "import openjiuwen; print(openjiuwen.__version__)"`；
-   - 根目录 README 必须标注当前样例适配的版本号（老样例 `openjiuwen==0.1.16`；新结构场景样例按各自 README 标注，如 `consumer_loan_precheck` 的 Python 版为 `openjiuwen==0.1.20`、Java 版为 `com.openjiuwen:agent-core-java:0.1.16`）；
+   - 根目录 README 必须标注当前样例适配的版本号（老样例 `openjiuwen==0.1.16`；新结构场景样例按各自 README 标注，如 `26_consumer_loan_precheck_ask_user` 的 Python 版为 `openjiuwen==0.1.20`、Java 版为 `com.openjiuwen:agent-core-java:0.1.16`）；
    - 禁止在工程内放置与框架重名的本地目录（会遮蔽 pip 安装的真实包）；
    - 框架升级后，受影响的样例与验收输出必须同步更新并通过回归。
 
@@ -25,10 +25,10 @@
 
 6. **API 以官方 examples 为准**。写样例前先读 `agent-core/examples/` 对应主题的官方样例，import 路径、config 类名、方法签名以其为准；拿不准时读框架源码，不猜。
 
-7. **新样例按场景命名，Python/Java 分目录**。老的编号样例（`samples/01_*`～`samples/25_*`）保持现状、不再改造；之后新增的样例统一按业务场景命名（如 `consumer_loan_precheck`，不用编号），场景目录下分 `python/` 与 `java/`，分别放两种语言 Agent Core 的实现：
+7. **新样例按「编号 + 场景 + 技术」命名，Python/Java 分目录**。老的编号样例（`samples/01_*`～`samples/25_*`）保持现状、不再改造；之后新增的样例编号从 26 开始，目录名为 `<两位编号>_<场景>_<技术>`（如 `26_consumer_loan_precheck_ask_user`：26 是编号，consumer_loan_precheck 是消费贷预审场景，ask_user 是人工提问技术），场景目录下分 `python/` 与 `java/`，分别放两种语言 Agent Core 的实现：
 
    ```text
-   samples/consumer_loan_precheck/
+   samples/26_consumer_loan_precheck_ask_user/
    ├── README.md            场景、目录结构、运行与验收（实测输出）
    ├── python/              Python 版实现 + UT（tests/）
    └── java/                Java 版实现 + JUnit（src/test/java/）

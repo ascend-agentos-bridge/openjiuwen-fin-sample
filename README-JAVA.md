@@ -1,6 +1,6 @@
 # Java 版 Agent Core 样例（银行金融场景）
 
-本指南对应 **Java 版 openJiuwen Agent Core**，当前样例适配 **`com.openjiuwen:agent-core-java:0.1.16`**，覆盖老结构的 `samples/20_*` 至 `samples/24_*`；新结构场景样例的 Java 版放在 `samples/<场景>/java/`（如 [consumer_loan_precheck](samples/consumer_loan_precheck/java/README.md)）。Python 版的 `pip install openjiuwen`、`main.py` 目录约定不适用于 Java 样例。
+本指南对应 **Java 版 openJiuwen Agent Core**，当前样例适配 **`com.openjiuwen:agent-core-java:0.1.16`**，覆盖老结构的 `samples/20_*` 至 `samples/24_*`；新结构场景样例的 Java 版放在 `samples/<场景>/java/`（如 [26_consumer_loan_precheck_ask_user](samples/26_consumer_loan_precheck_ask_user/java/README.md)）。Python 版的 `pip install openjiuwen`、`main.py` 目录约定不适用于 Java 样例。
 
 Java 业务入口在 `src/main/java/`，验收在 `src/test/java/`，通过 Maven 分别运行。返回[仓库总览与 Python 指南](README.md)。
 
@@ -39,7 +39,7 @@ mvn -q compile exec:java
 | [22 java_langfuse](samples/22_java_langfuse/README.md) | `CreditLangfuse.main` | 使用官方 OTel handler 向 Langfuse 导出轨迹 |
 | [23 java_tool_rails](samples/23_java_tool_rails/README.md) | `CreditToolRails.main` | 自定义工具校验、审批中断恢复、异常重试 |
 | [24 java_ascend_affinity](samples/24_java_ascend_affinity/README.md) | `CreditAffinity.main` | 官方 KV Cache 亲和开关及多轮压缩；普通调用验收 |
-| [consumer_loan_precheck/java](samples/consumer_loan_precheck/java/README.md) | `ConsumerLoanPrecheck.main` | 新结构场景样例：`ask_user` 追问金额/期限（运行者交互输入）→ 规则预审；JUnit 含真实模型验收 |
+| [26_consumer_loan_precheck_ask_user/java](samples/26_consumer_loan_precheck_ask_user/java/README.md) | `ConsumerLoanPrecheck.main` | 新结构场景样例：`ask_user` 追问金额/期限（运行者交互输入）→ 规则预审；JUnit 含真实模型验收 |
 
 五个老样例均可在各自目录通过 `mvn -q compile exec:java` 启动，入口类由该目录的 `pom.xml` 配置；新结构样例在自己的 `java/` 目录同样用 `mvn -q compile exec:java` 运行，`mvn -q test` 跑 JUnit 验收。样例 22 还需要 Langfuse 配置，见下文。
 

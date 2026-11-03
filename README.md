@@ -1,13 +1,13 @@
 # openjiuwen-sample：Agent 业务开发样例（银行信贷场景）
 
-做业务系统的人想给信贷、风控、客服这类系统加 Agent 功能（自动查档、跑审批、生成意见、多轮对话）时，可以照这个仓库的样例写。Python 样例使用开源 openjiuwen Agent Core 官方 API（01–19 适配 `openjiuwen==0.1.16`；新结构场景样例 `consumer_loan_precheck` 的 Python 版适配 `openjiuwen==0.1.20`、Java 版适配 `com.openjiuwen:agent-core-java:0.1.16`）；另有 5 个老的 Java 样例，演示三层子智能体委派、完整调用链日志、Langfuse 对接、自定义工具 Rail 和 KV Cache 亲和开关，适配 `com.openjiuwen:agent-core-java:0.1.16`。一个特性一个文件夹，配套 README 写清楚运行前提、代码讲解、验收方式和实测输出。完整索引见 [FEATURES.md](FEATURES.md)。
+做业务系统的人想给信贷、风控、客服这类系统加 Agent 功能（自动查档、跑审批、生成意见、多轮对话）时，可以照这个仓库的样例写。Python 样例使用开源 openjiuwen Agent Core 官方 API（01–19 适配 `openjiuwen==0.1.16`；新结构场景样例 `26_consumer_loan_precheck_ask_user` 的 Python 版适配 `openjiuwen==0.1.20`、Java 版适配 `com.openjiuwen:agent-core-java:0.1.16`）；另有 5 个老的 Java 样例，演示三层子智能体委派、完整调用链日志、Langfuse 对接、自定义工具 Rail 和 KV Cache 亲和开关，适配 `com.openjiuwen:agent-core-java:0.1.16`。一个特性一个文件夹，配套 README 写清楚运行前提、代码讲解、验收方式和实测输出。完整索引见 [FEATURES.md](FEATURES.md)。
 
 样例只 import 官方包，仓库里没有自封装的第二套 API。觉得框架接口不好用，按 [AGENTS.md](AGENTS.md) 的约定去 agent-core 仓库提 Issue / PR，把改进做进框架本体。
 
 | SDK 版本 | 样例范围 | 依赖与入口 | 开发指南 |
 |---|---|---|---|
-| Python 版 Agent Core | 01–19、consumer_loan_precheck | 老样例 `openjiuwen==0.1.16` + `main.py`；新样例按场景目录，`python/` 用 `0.1.20` | 本文下方的 Python 说明 |
-| Java 版 Agent Core | 20–24、consumer_loan_precheck | 老样例 `com.openjiuwen:agent-core-java:0.1.16`，Java `main` / Maven；新样例的 `java/` 同一版本 | [Java 版 README](README-JAVA.md) |
+| Python 版 Agent Core | 01–19、26_consumer_loan_precheck_ask_user | 老样例 `openjiuwen==0.1.16` + `main.py`；新样例按场景目录，`python/` 用 `0.1.20` | 本文下方的 Python 说明 |
+| Java 版 Agent Core | 20–24、26_consumer_loan_precheck_ask_user | 老样例 `com.openjiuwen:agent-core-java:0.1.16`，Java `main` / Maven；新样例的 `java/` 同一版本 | [Java 版 README](README-JAVA.md) |
 
 两套 SDK 的项目结构和 API 分别以对应语言的官方示例为准。Java 开发者从 [Java 指南](README-JAVA.md) 的样例 23 开始，无需安装 Python 版 `openjiuwen`。
 
@@ -50,7 +50,7 @@ python main.py
 
 Python 开发从 01 开始，Java 开发从 23 开始，再按对应语言和业务场景选择。
 
-### Python SDK：01–19（老结构）+ consumer_loan_precheck（新结构）
+### Python SDK：01–19（老结构）+ 26_consumer_loan_precheck_ask_user（新结构）
 
 | 样例 | 业务场景 | 对应能力 |
 |---|---|---|
@@ -73,7 +73,7 @@ Python 开发从 01 开始，Java 开发从 23 开始，再按对应语言和业
 | [17 evaluation_optimizer](samples/17_evaluation_optimizer/) | 让 LLM 当裁判，按规则给 Agent 的回答打分 | LLM-as-Judge 评测 |
 | [18 mcp_tools](samples/18_mcp_tools/) | 信贷工具封装成标准 MCP 服务，其他进程也能调 | MCP 工具协议 |
 | [19 skill_use](samples/19_skill_use/) | 贷前审查规范写成 SKILL.md，Agent 按需读取技能并遵循执行 | Agent Skill：注册技能 + 提示注入 + 按需装载 |
-| [consumer_loan_precheck](samples/consumer_loan_precheck/) | 客户自己输入贷款问题，Agent 追问金额/期限、运行者自己填答案，再给出预审意见 | 人机交互：`ask_user` 追问 + 规则预审（Python + Java 双语言） |
+| [26 consumer_loan_precheck_ask_user](samples/26_consumer_loan_precheck_ask_user/) | 客户自己输入贷款问题，Agent 追问金额/期限、运行者自己填答案，再给出预审意见 | 人机交互：`ask_user` 追问 + 规则预审（Python + Java 双语言） |
 
 ### Java SDK：20–24
 
@@ -87,7 +87,7 @@ Python 开发从 01 开始，Java 开发从 23 开始，再按对应语言和业
 
 每个样例目录的 README 都含：场景说明、代码讲解、运行与验收方式、实测输出、注意点。其中“注意点”记的是真实踩过的坑（返回值形态、默认超时这类），换模型、升版本前值得先看。
 
-新样例规范见 [AGENTS.md](AGENTS.md) 硬约束 7–9：老的编号样例不再改造；新增样例按业务场景命名，场景目录下分 `python/` 与 `java/`；`main.py` / Java `main` 只写业务流程，客户问题与澄清答案由运行样例的人输入；验收一律放 UT（`python/tests/` 或 `java/src/test/java/`）。
+新样例规范见 [AGENTS.md](AGENTS.md) 硬约束 7–9：老的编号样例不再改造；新增样例按「编号 + 场景 + 技术」命名，场景目录下分 `python/` 与 `java/`；`main.py` / Java `main` 只写业务流程，客户问题与澄清答案由运行样例的人输入；验收一律放 UT（`python/tests/` 或 `java/src/test/java/`）。
 
 Java 样例需要 **JDK 17+、Maven 3.9+**。原生入口、Maven 依赖、模型配置、JUnit 验收和 Langfuse 额外前提统一见 [Java 版 README](README-JAVA.md)。
 
@@ -96,7 +96,7 @@ Java 样例需要 **JDK 17+、Maven 3.9+**。原生入口、Maven 依赖、模�
 ```bash
 python run_all_samples.py                         # 跑全部
 python run_all_samples.py 01 06                   # 只跑指定编号（老样例）
-python run_all_samples.py consumer_loan_precheck  # 按场景目录名过滤（新样例）
+python run_all_samples.py 26_consumer_loan_precheck_ask_user  # 按编号/场景名过滤（新样例）
 ```
 
 脚本按编号/场景名顺序执行：老纯 Maven 样例直接运行 JUnit；老 Python 样例优先运行 `test.py`，否则运行 `main.py`；新结构样例跑 `python/tests/` 的 unittest（以及 `java/` 的 JUnit，如果该目录有 `pom.xml`）。逐条打印 `[PASS]/[FAIL]` 和耗时，最后汇总通过数，退出码非 0 即失败。
@@ -127,7 +127,7 @@ harness 级的 DeepAgent、RL 训练这类能力没有放进样例。Java 三层
 openjiuwen-sample/
 ├── README.md               仓库总览与 Python 版说明
 ├── README-JAVA.md          Java 版 SDK、运行、验收与目录说明
-├── samples/               老样例 01–24（单语言结构）；新样例为场景目录（python/ + java/）
+├── samples/               老样例 01–24（单语言结构）；新样例为「编号_场景_技术」目录（python/ + java/）
 ├── benchmarks/            Java 亲和 benchmark、逐请求统计与结论报告
 ├── FEATURES.md            两套 SDK 的样例索引
 ├── run_all_samples.py      可选的跨语言回归调度脚本
@@ -145,10 +145,10 @@ samples/01_hello_react_agent/
 └── README.md               场景、代码讲解、运行、验收与实测输出
 ```
 
-新样例（按场景命名；以本次新增的 `consumer_loan_precheck` 为例）：
+新样例（按「编号 + 场景 + 技术」命名；以本次新增的 `26_consumer_loan_precheck_ask_user` 为例）：
 
 ```text
-samples/consumer_loan_precheck/
+samples/26_consumer_loan_precheck_ask_user/
 ├── README.md               场景、目录结构、交互步骤、代码讲解、运行与验收
 ├── python/
 │   ├── main.py             业务入口（交互式：运行者输入客户问题与澄清答案）

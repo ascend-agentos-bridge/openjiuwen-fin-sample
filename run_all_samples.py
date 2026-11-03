@@ -3,7 +3,7 @@
 用法:
     python run_all_samples.py                       # 跑全部
     python run_all_samples.py 01 06                 # 只跑指定编号（老样例）
-    python run_all_samples.py consumer_loan_precheck  # 按场景目录名过滤（新样例）
+    python run_all_samples.py 26_consumer_loan_precheck_ask_user  # 按编号/目录名过滤（新样例）
 """
 import os
 import subprocess
@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parent
 
 
 def _matches(sample: Path, requested: list[str]) -> bool:
-    """编号前缀（01）或目录名片段（consumer_loan_precheck）都能筛样例。"""
+    """编号前缀（01）或目录名片段（26_consumer_loan_precheck_ask_user）都能筛样例。"""
     if not requested:
         return True
     for arg in requested:
@@ -28,7 +28,7 @@ def _collect_units(selected: list[Path]) -> list[tuple[str, Path, list[str]]]:
     """把每个样例展开成可执行的回归单元: (显示名, 工作目录, 命令)。
 
     - 老结构: samples/<编号>_<名称>/ 下直接有 main.py / test.py / pom.xml；
-    - 新结构: samples/<场景>/python/ 跑 unittest，samples/<场景>/java/ 跑 Maven JUnit。
+    - 新结构: samples/<编号_场景_技术>/python/ 跑 unittest，同级 java/ 跑 Maven JUnit。
     """
     units: list[tuple[str, Path, list[str]]] = []
     for sample in selected:

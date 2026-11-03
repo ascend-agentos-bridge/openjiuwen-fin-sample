@@ -15,7 +15,7 @@ Agent 不自己假设：先用 `ask_user` 追问金额区间和还款期限；�
 ## 目录结构
 
 ```text
-samples/consumer_loan_precheck/
+samples/26_consumer_loan_precheck_ask_user/
 ├── README.md
 ├── python/
 │   ├── main.py                             业务入口：交互式预审（客户问题 / 澄清答案由运行者输入）
@@ -49,7 +49,7 @@ samples/consumer_loan_precheck/
 ### Python 版
 
 ```bash
-cd samples/consumer_loan_precheck/python
+cd samples/26_consumer_loan_precheck_ask_user/python
 pip install -U openjiuwen   # 0.1.20
 python main.py
 ```
@@ -66,7 +66,7 @@ python main.py
 ### Java 版
 
 ```bash
-cd samples/consumer_loan_precheck/java
+cd samples/26_consumer_loan_precheck_ask_user/java
 mvn -q exec:java
 ```
 
@@ -116,7 +116,7 @@ Java 版的真实交互输出见 [java/README.md](java/README.md)。
 Python 规则单测 + 真实模型集成测试：
 
 ```bash
-cd samples/consumer_loan_precheck/python
+cd samples/26_consumer_loan_precheck_ask_user/python
 python -m unittest discover -s tests -v
 ```
 
@@ -125,7 +125,7 @@ python -m unittest discover -s tests -v
 Java JUnit：规则单测 + 真实模型集成测试：
 
 ```bash
-cd samples/consumer_loan_precheck/java
+cd samples/26_consumer_loan_precheck_ask_user/java
 mvn -q test          # -Preal-model 与默认一致，仓库回归脚本统一带该 profile
 ```
 
