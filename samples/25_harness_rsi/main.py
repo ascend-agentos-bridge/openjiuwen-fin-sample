@@ -75,7 +75,8 @@ async def main() -> None:
     result = await run(task_id, resume=os.getenv("RSI_RESUME") == "1")
     report = yaml.safe_load(Path(result.report_path).read_text(encoding="utf-8"))
     print(f"发布状态：{report['publication_status']}")
-    print(f"基线分数：{report['baseline_score']}；最佳分数：{result.best_score}")
+    print(f"基线分数：{report['baseline_score'] * 100:.2f} 分；"
+          f"最佳分数：{result.best_score * 100:.2f} 分（满分 100 分）")
     print(f"最佳 Harness：{result.best_harness_refs_path}")
     if result.published_harness_refs_path:
         print(f"发布包：{result.published_harness_refs_path}")

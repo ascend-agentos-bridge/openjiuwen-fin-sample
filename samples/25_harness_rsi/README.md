@@ -2,6 +2,8 @@
 
 > 基于开源 [`openjiuwen==0.1.20`](https://github.com/openJiuwen-ai/agent-core/releases/tag/v0.1.20) 的真实 Single Harness RSI API。所有 Agent 执行、失败归因、候选生成和 LLM 评审都调用真实模型；不使用 mock LLM。案例、人员、政策编号均为虚构演示。
 
+> **旅程重设计（2026-11-04，待实现）**：现有 h0 已包含四案所考的公式、红线和输出步骤，可能在基线就满分。新的样例主线为“基础题已会 → 复杂材料暴露真实缺口 → RSI 改进 → 同题对比 → 回归保护与独立留出复验”，保留 h0，明确区分闭环完成与能力提升。具体案例、校准方法和验收门槛见 [提升旅程设计](../../docs/superpowers/specs/2026-11-04-sample25-improvement-journey-design.md)。以下仍为当前实现与历史实测，不代表新旅程已验收。
+
 ## 1. 场景：把“改提示词”变成可审计的演进闭环
 
 已有信贷 Agent 可能出现漏算偿债收入比、当前逾期仍建议通过、资料缺失时编数等问题。本样例不重写 Agent，也不自拼优化算法，而是把现有 Agent 的 Prompt 与 Skill 导出成官方 Plugin Harness，再交给 `SingleHarnessIterativeOptimizationOrchestrator`：
@@ -48,6 +50,8 @@ result = await SingleHarnessIterativeOptimizationOrchestrator(config).run(reques
 ```
 
 `main.py` 的 `prepare_run()` 准备模型配置、任务目录与官方请求，`run()` 直接调用官方编排器，`main()` 展示发布状态、分数和报告路径。任务名和新建/恢复目录检查属于入口配置校验。报告一致性、包差异、六段输出检查、留出集和强制提分验收均在 `test.py`，业务代码不导入测试模块。
+
+入口和 UT 汇总统一使用 **100 分制**，满分 100 分、显示保留两位小数；UT 汇总中的 `score_scale: 100` 标明分制。官方 state/report、数据集权重和晋升配置仍使用 0～1 的原始尺度，对外分数乘以 100；例如每项权重 `0.25` 对应 25 分，`min_improvement: 0.05` 对应至少提升 5 分。验收使用原始值比较，不受显示舍入影响。
 
 目录结构（保留旧样例单语言布局）：
 

@@ -541,8 +541,11 @@ class HarnessRsiRealModelTest(unittest.IsolatedAsyncioTestCase):
         print(json.dumps({
             "task_id": task_id, "report": result.report_path,
             "publication_status": report["publication_status"],
-            "baseline_score": report["baseline_score"], "best_score": report["best_score"],
-            "changed_prompt_skill_files": changed, "holdout_scores": scores,
+            "score_scale": 100,
+            "baseline_score": round(report["baseline_score"] * 100, 2),
+            "best_score": round(report["best_score"] * 100, 2),
+            "changed_prompt_skill_files": changed,
+            "holdout_scores": {name: round(score * 100, 2) for name, score in scores.items()},
         }, ensure_ascii=False, indent=2), flush=True)
 
 
