@@ -34,3 +34,8 @@ Thumbs.db
 # Java sample build outputs and local validation runtime
 target/
 .cache/
+
+# sample25 RSI run artifacts and generated batch plans
+samples/25_harness_rsi/runs/
+samples/25_harness_rsi/data/batch_plan.yaml
+samples/25_harness_rsi/data/dataset_profile.yaml

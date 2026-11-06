@@ -4,7 +4,7 @@ example_notice: "完整虚构示例，不代表已执行真实优化。"
 owner: {role: "业务负责人 + 风控/合规 + Agent 开发者", name: "吴业务、陈合规、赵开发（均虚构）", department: "信贷与风控联合小组（虚构）"}
 inputs:
   initial_harness_refs: "harness/harness_refs.yaml"
-  optimization_dataset: "data/optimization_cases.json#credit-review-optimization-v1"
+  optimization_dataset: "data/optimization_cases.json#credit-review-optimization-v2"
   holdout_dataset: "data/holdout_cases.json#credit-review-holdout-v1"
   judge_protocol: "llm_as_judge / continuous / answer_role=reference / penalty_mode=subtract"
   policy_version: DEMO-CREDIT-2026.1

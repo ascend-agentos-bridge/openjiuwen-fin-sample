@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 import os
 from pathlib import Path
 import re
+import shutil
 
 import yaml
 
@@ -12,6 +13,14 @@ import yaml
 SAMPLE_DIR = Path(__file__).resolve().parent
 SOURCE_REFS = SAMPLE_DIR / "harness/harness_refs.yaml"
 OPTIMIZATION_DATA = SAMPLE_DIR / "data/optimization_cases.json"
+
+
+def reset_member_workspace(runs_root: Path) -> None:
+    """清理官方成员优化器的共享工作区，避免上个任务的 worktree 文件混入候选包。"""
+    member_workspace = (runs_root / "mh").resolve()
+    if not member_workspace.is_relative_to(runs_root) or not member_workspace.is_dir():
+        return
+    shutil.rmtree(member_workspace)
 
 
 def materialize_runtime_refs(source_refs: Path, run_dir: Path) -> Path:
@@ -29,11 +38,13 @@ def prepare_run(task_id: str, *, resume: bool = False, runs_dir: Path | None = N
 
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", task_id):
         raise ValueError("任务名需以字母或数字开头，只能包含字母、数字、点、下划线和连字符")
-    run_dir = (runs_dir or SAMPLE_DIR / "runs").resolve() / task_id
+    runs_root = (runs_dir or SAMPLE_DIR / "runs").resolve()
+    run_dir = runs_root / task_id
     if resume and not (run_dir / "single_harness_state.yaml").is_file():
         raise ValueError(f"没有可恢复的任务状态: {run_dir}")
     if not resume:
         run_dir.mkdir(parents=True, exist_ok=False)
+        reset_member_workspace(runs_root)
     source_refs = run_dir / "source_harness_refs.yaml"
     if not resume:
         source_refs = materialize_runtime_refs(SOURCE_REFS, run_dir)
@@ -53,7 +64,7 @@ def prepare_run(task_id: str, *, resume: bool = False, runs_dir: Path | None = N
         dataset_files=[str(OPTIMIZATION_DATA)],
         harness_refs_path=str(source_refs),
         output_dir=str(run_dir),
-        dataset_id="credit-review-optimization-v1",
+        dataset_id="credit-review-optimization-v2",
         auto_full_baseline=True,
         task_id=task_id,
         max_iteration=1,

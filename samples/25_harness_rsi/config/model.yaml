@@ -5,5 +5,14 @@ model:
     api_base: ${API_BASE}
     max_retries: 0
     timeout: 300
+    # 本样例只处理文本材料；声明不接收原生图片，避免运行时多模态探测请求。
+    supports_vision: false
   model_request_config:
     model: ${MODEL_NAME}
+    # 固定采样，减少 RSI 多阶段调用之间的随机波动。
+    temperature: 0
+    # 推理型模型（如 DeepSeek V4.1 Flash / LM Studio 推理模型）使用 high 推理档；
+    # OpenAI 兼容网关若不支持该参数会忽略或返回错误，可在网关侧关闭。
+    reasoning:
+      mode: enabled
+      effort: high

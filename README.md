@@ -75,7 +75,7 @@ Python 开发从 01 开始，Java 开发从 23 开始，再按对应语言和业
 | [17 evaluation_optimizer](samples/17_evaluation_optimizer/) | 让 LLM 当裁判，按规则给 Agent 的回答打分 | LLM-as-Judge 评测 |
 | [18 mcp_tools](samples/18_mcp_tools/) | 信贷工具封装成标准 MCP 服务，其他进程也能调 | MCP 工具协议 |
 | [19 skill_use](samples/19_skill_use/) | 贷前审查规范写成 SKILL.md，Agent 按需读取技能并遵循执行 | Agent Skill：注册技能 + 提示注入 + 按需装载 |
-| [25 harness_rsi](samples/25_harness_rsi/) | 持续演进信贷 Agent 的 Prompt 与 Skill | 官方 Single Harness RSI；业务入口与独立 UT 验收 |
+| [25 harness_rsi](samples/25_harness_rsi/) | 持续演进信贷 Agent 的 Prompt 与 Skill | 官方 Single Harness RSI；业界标准 Skill 目录（SKILL.md + references/ + scripts/）；6+4 冻结评测集；业务入口与独立 UT 验收 |
 | [26 consumer_loan_precheck_ask_user](samples/26_consumer_loan_precheck_ask_user/) | 客户自己输入贷款问题，Agent 追问金额/期限、运行者自己填答案，再给出预审意见 | 人机交互：`ask_user` 追问 + 规则预审（Python + Java 双语言） |
 
 ### Java SDK：20–24

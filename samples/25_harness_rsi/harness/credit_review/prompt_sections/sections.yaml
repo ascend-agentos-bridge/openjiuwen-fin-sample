@@ -1,0 +1,4 @@
+sections:
+- name: credit_review
+  file: prompt_sections/files/credit_review.md
+  priority: 30

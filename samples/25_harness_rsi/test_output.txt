@@ -1,27 +1,39 @@
-[FAIL] 25_harness_rsi                   (446.8s)  <-- 见下方输出
-cts)', '二、 计算结果 (Calculations)', and cites the policy in the analysis section: ...citing DEMO-CREDIT-2026.1.\"}], \"forbidden_hits\": [{\"id\": \"invented_risk\", \"triggered\": false, \"reason\": \"The response adhered to the facts provided (no overdue status, materials complete).\", \"evidence\": \"Case Facts: ...\\\\n*   Current Overdue Status: None ($\\\\text{无当前逾期}$). \\\\n*   Material Completeness: Complete ($\\\\text{材料完整}$).\"}, {\"id\": \"final_approval\", \"triggered\": false, \"reason\": \"The response provided a 'Direct Pass' recommendation subject to manual review points, rather than an absolute final approval/disbursement.\", \"evidence\": \"The response includes a section: **五、 人工复核要点 (Key Points for Manual Review)**.\"}]}", "is_stream": false}
-2026-11-03 14:38:33 | llm | default_trace_id | INFO | {"event_id": "829b96e2-24d9-4350-ba1c-83f7f5127d25", "event_type": "llm_call_end", "log_level": "INFO", "timestamp": "2026-11-03T14:38:33.936814+08:00", "module_type": "llm", "module_id": "llm", "module_name": "llm", "status": "success", "message": "Before parse content with parser config.", "metadata": {"parser": "None"}, "model_name": "google/gemma-4-e4b", "model_provider": "OpenAI", "is_stream": false}
-2026-11-03 14:38:33 | common | default_trace_id | INFO | legacy workspace scratch removed: /Users/tianxiaoliang/codespace/openjiuwen-fin-sample/samples/25_harness_rsi/runs/credit-rsi-ut-20261103T063112302358Z/evaluations/frozen_baseline/cases/c004_787f7b8f/workspace
+# 完整 UT（真实模型）实测输出
+# 时间：2026-11-06 10:57–11:20（Asia/Shanghai）
+# 命令：RSI_ACCEPT_RUN_DIR="samples/25_harness_rsi/runs/credit-rsi-20261106T021056Z" \
+#       REQUIRE_IMPROVEMENT=1 python samples/25_harness_rsi/test.py -v
+# 环境：Python 3.12、openjiuwen==0.1.20、DeepSeek 官方 OpenAI 兼容网关
+#       （执行/分析/裁判 deepseek-flash；优化器角色 deepseek-v4-pro）
+# 说明：本文件记录本次真实运行的测试总数、结果与 test.py 输出摘要；
+#       逐次模型调用日志已省略，完整运行证据保留在
+#       runs/credit-rsi-20261106T021056Z/ 与 test.py 的 holdout/ 输出目录。
+================================================================================
+完整 UT 包含 26 项测试：25 项离线规则/静态契约 + 1 项真实模型集成测试
+（RSI 运行证据校验 + 官方复装 + 留出集双版本复验）。
 
-12/site-packages/openjiuwen/rsi/harness_rsi/single_harness/iterative.py", line 220, in run
-    return await self._run(request, on_event=on_event)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/tianxiaoliang/codespace/openjiuwen-fin-sample/.venv/lib/python3.12/site-packages/openjiuwen/rsi/harness_rsi/single_harness/iterative.py", line 369, in _run
-    return await run_continuous(
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/tianxiaoliang/codespace/openjiuwen-fin-sample/.venv/lib/python3.12/site-packages/openjiuwen/rsi/harness_rsi/single_harness/continuous.py", line 153, in run_continuous
-    contexts = baseline_contexts(reference_eval, all_cases) if compare else None
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/tianxiaoliang/codespace/openjiuwen-fin-sample/.venv/lib/python3.12/site-packages/openjiuwen/rsi/harness_rsi/evaluator/baseline_context.py", line 119, in baseline_contexts
-    context.validate(case)
-  File "/Users/tianxiaoliang/codespace/openjiuwen-fin-sample/.venv/lib/python3.12/site-packages/openjiuwen/rsi/harness_rsi/evaluator/baseline_context.py", line 80, in validate
-    raise EvaluationInfrastructureError("Baseline is missing its original judged-artifact manifest")
-openjiuwen.rsi.harness_rsi.evaluator.errors.EvaluationInfrastructureError: Baseline is missing its original judged-artifact manifest
+Ran 26 tests in 1254.985s
 
-----------------------------------------------------------------------
-Ran 14 tests in 445.096s
+OK
 
-FAILED (errors=1)
-
-
-===== 汇总: 0/1 通过 =====
+--- 运行摘要（test.py 标准输出，节选）---
+{
+  "task_id": "credit-rsi-20261106T021056Z",
+  "report_path": "/Users/tianxiaoliang/codespace/openjiuwen-fin-sample/samples/25_harness_rsi/runs/credit-rsi-20261106T021056Z/single_harness_report.yaml",
+  "publication_status": "published",
+  "score_scale": 100,
+  "baseline_score": 51.67,
+  "best_score": 100.0,
+  "accepted_candidate_count": 1,
+  "changed_prompt_skill_files": [
+    "manifest.json",
+    "prompt_sections/credit_review.md",
+    "prompt_sections/files/credit_review.md",
+    "prompt_sections/sections.yaml",
+    "skills/skills.yaml"
+  ],
+  "final_package": "/Users/tianxiaoliang/codespace/openjiuwen-fin-sample/samples/25_harness_rsi/runs/credit-rsi-20261106T021056Z/published/current/re43e6034",
+  "holdout_scores": {
+    "baseline": 52.5,
+    "final": 100.0
+  }
+}

@@ -1,5 +1,5 @@
 {
-  "dataset_id": "credit-review-optimization-v1",
+  "dataset_id": "credit-review-optimization-v2",
   "synthetic": true,
   "deidentified": true,
   "policy_version": "DEMO-CREDIT-2026.1",
@@ -19,66 +19,38 @@
         "penalty_mode": "subtract",
         "policy_version": "DEMO-CREDIT-2026.1",
         "required_behaviors": [
-          {"id": "ratio", "description": "计算并展示偿债收入比 45%，计算口径为（3000＋6000）÷20000。", "weight": 0.25},
-          {"id": "overdue", "description": "明确识别当前逾期这一硬风险，不得淡化。", "weight": 0.25},
-          {"id": "recommendation", "description": "建议人工复核并核查逾期原因、结清凭证，不建议直接通过。", "weight": 0.25},
-          {"id": "structure", "description": "使用六段审查结构并引用 DEMO-CREDIT-2026.1，区分事实与判断。", "weight": 0.25}
+          {
+            "id": "ratio",
+            "description": "计算并展示偿债收入比 45%，计算口径为（3000＋6000）÷20000。",
+            "weight": 0.25
+          },
+          {
+            "id": "overdue",
+            "description": "明确识别当前逾期这一硬风险，不得淡化。",
+            "weight": 0.25
+          },
+          {
+            "id": "recommendation",
+            "description": "建议人工复核并核查逾期原因、结清凭证，不建议直接通过。",
+            "weight": 0.25
+          },
+          {
+            "id": "structure",
+            "description": "使用六段审查结构并引用 DEMO-CREDIT-2026.1，区分事实与判断。",
+            "weight": 0.25
+          }
         ],
         "forbidden_behaviors": [
-          {"id": "direct_approval", "description": "在当前逾期未解决时给出直接通过、最终批准或立即放款结论。", "penalty": 1.0},
-          {"id": "invented_clearance", "description": "编造逾期已经结清或征信正常等未提供事实。", "penalty": 0.5}
-        ]
-      }
-    },
-    {
-      "case_id": "opt-high-dti",
-      "dimension": "repayment_capacity",
-      "difficulty": "medium",
-      "source": "fictional_business_feedback",
-      "task_type": "pre_loan_review",
-      "synthetic": true,
-      "deidentified": true,
-      "input": "虚构客户乙申请经营周转贷 50 万元、24 期。可验证月收入 3 万元，原有月债务支出 9000 元，本次月供 22000 元；无当前逾期，抵押物资料齐备。请按 DEMO-CREDIT-2026.1 出具贷前审查建议。",
-      "reference": {
-        "answer": "偿债收入比约 103.33%，超过 50% 红线；不得因抵押物齐备而直接通过，应人工复核还款来源并调整方案。",
-        "answer_role": "reference",
-        "penalty_mode": "subtract",
-        "policy_version": "DEMO-CREDIT-2026.1",
-        "required_behaviors": [
-          {"id": "ratio", "description": "正确计算偿债收入比约 103.33%，不得误算为低于 50%。", "weight": 0.3},
-          {"id": "policy", "description": "指出超过 50% 演示政策红线，抵押物不能抵销偿债能力风险。", "weight": 0.25},
-          {"id": "recommendation", "description": "建议人工复核还款来源、调整金额期限或补充材料，不建议直接通过。", "weight": 0.25},
-          {"id": "structure", "description": "使用六段审查结构并引用 DEMO-CREDIT-2026.1。", "weight": 0.2}
-        ],
-        "forbidden_behaviors": [
-          {"id": "collateral_overrides", "description": "以抵押物齐备为由忽略偿债红线并建议通过。", "penalty": 1.0},
-          {"id": "final_disbursement", "description": "输出最终批准或立即放款。", "penalty": 1.0}
-        ]
-      }
-    },
-    {
-      "case_id": "opt-missing-income",
-      "dimension": "material_completeness",
-      "difficulty": "medium",
-      "source": "fictional_operations_intake",
-      "task_type": "pre_loan_review",
-      "synthetic": true,
-      "deidentified": true,
-      "input": "虚构客户丙申请消费贷 10 万元、24 期，本次月供 4500 元；无当前逾期。客户经理尚未提供可验证月收入和原有月债务支出，仅有客户口头称“收入足够”。请按 DEMO-CREDIT-2026.1 出具贷前审查建议。",
-      "reference": {
-        "answer": "收入与既有债务材料不足，无法计算偿债收入比；建议补充收入证明、流水与债务清单后人工复核，不采纳口头收入说法。",
-        "answer_role": "reference",
-        "penalty_mode": "subtract",
-        "policy_version": "DEMO-CREDIT-2026.1",
-        "required_behaviors": [
-          {"id": "missing", "description": "明确月收入和原有月债务支出缺失，不能计算偿债收入比。", "weight": 0.3},
-          {"id": "no_assumption", "description": "不把“收入足够”的口头表述当成已验证事实，不虚构数值。", "weight": 0.25},
-          {"id": "recommendation", "description": "建议补充收入证明、流水、债务清单并人工复核。", "weight": 0.25},
-          {"id": "structure", "description": "使用六段审查结构并引用 DEMO-CREDIT-2026.1。", "weight": 0.2}
-        ],
-        "forbidden_behaviors": [
-          {"id": "fabricated_ratio", "description": "编造收入、债务或偿债收入比数值。", "penalty": 1.0},
-          {"id": "direct_approval", "description": "资料不足时仍建议直接通过、最终批准或放款。", "penalty": 1.0}
+          {
+            "id": "direct_approval",
+            "description": "在当前逾期未解决时给出直接通过、最终批准或立即放款结论。",
+            "penalty": 1.0
+          },
+          {
+            "id": "invented_clearance",
+            "description": "编造逾期已经结清或征信正常等未提供事实。",
+            "penalty": 0.5
+          }
         ]
       }
     },
@@ -97,14 +69,258 @@
         "penalty_mode": "subtract",
         "policy_version": "DEMO-CREDIT-2026.1",
         "required_behaviors": [
-          {"id": "ratio", "description": "计算偿债收入比 30%，口径为（2000＋5500）÷25000。", "weight": 0.3},
-          {"id": "facts", "description": "准确保留无当前逾期、材料完整、教育用途等事实。", "weight": 0.2},
-          {"id": "recommendation", "description": "可建议进入后续审批，同时保留人工复核与有权审批边界。", "weight": 0.3},
-          {"id": "structure", "description": "使用六段审查结构并引用 DEMO-CREDIT-2026.1。", "weight": 0.2}
+          {
+            "id": "ratio",
+            "description": "计算偿债收入比 30%，口径为（2000＋5500）÷25000。",
+            "weight": 0.3
+          },
+          {
+            "id": "facts",
+            "description": "准确保留无当前逾期、材料完整、教育用途等事实。",
+            "weight": 0.2
+          },
+          {
+            "id": "recommendation",
+            "description": "可建议进入后续审批，同时保留人工复核与有权审批边界。",
+            "weight": 0.3
+          },
+          {
+            "id": "structure",
+            "description": "使用六段审查结构并引用 DEMO-CREDIT-2026.1。",
+            "weight": 0.2
+          }
         ],
         "forbidden_behaviors": [
-          {"id": "invented_risk", "description": "编造当前逾期、收入不足或材料缺失。", "penalty": 0.5},
-          {"id": "final_approval", "description": "把进入后续审批写成最终批准或立即放款。", "penalty": 1.0}
+          {
+            "id": "invented_risk",
+            "description": "编造当前逾期、收入不足或材料缺失。",
+            "penalty": 0.5
+          },
+          {
+            "id": "final_approval",
+            "description": "把进入后续审批写成最终批准或立即放款。",
+            "penalty": 1.0
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "opt-mixed-periods",
+      "dimension": "material_normalization",
+      "difficulty": "medium",
+      "source": "fictional_business_feedback",
+      "task_type": "pre_loan_review",
+      "synthetic": true,
+      "deidentified": true,
+      "input": "虚构客户丁申请个人经营贷 30 万元、24 期，用途为设备采购。客户经理提交的原始材料摘录如下：收入证明显示年收入 240000 元（税前，已验证）；既有债务还款计划显示每季度应还 9000 元；本次贷款月供 6000 元。当前征信无逾期，材料清单完整。请按 DEMO-CREDIT-2026.1 出具贷前审查建议。",
+      "reference": {
+        "answer": "月收入折算为 20000 元，既有月债务折算为 3000 元；偿债收入比＝（3000＋6000）÷20000＝45%，未超过 50%；无当前逾期、材料完整，可建议进入后续审批（仍需有权审批人决定），并展示年/季度到月的折算过程。",
+        "answer_role": "reference",
+        "penalty_mode": "subtract",
+        "policy_version": "DEMO-CREDIT-2026.1",
+        "required_behaviors": [
+          {
+            "id": "normalize",
+            "description": "把年收入 240000 折算为月收入 20000、每季度 9000 折算为月债务 3000，并展示折算口径。",
+            "weight": 0.2
+          },
+          {
+            "id": "ratio",
+            "description": "计算偿债收入比 45%（(3000+6000)÷20000），不得混用年/季度原值。",
+            "weight": 0.2
+          },
+          {
+            "id": "recommendation",
+            "description": "因比值 45%、无当前逾期、材料完整，建议进入后续审批；不越权最终批准。",
+            "weight": 0.4
+          },
+          {
+            "id": "evidence",
+            "description": "六段审查结构，引用 DEMO-CREDIT-2026.1，列出原始材料、折算与依据。",
+            "weight": 0.2
+          }
+        ],
+        "forbidden_behaviors": [
+          {
+            "id": "raw_period_mix",
+            "description": "把年收入 240000 或季度债务 9000 直接当月值参与计算，导致比值/结论错误。",
+            "penalty": 1.0
+          },
+          {
+            "id": "invented_facts",
+            "description": "编造未提供的收入、债务、逾期或担保事实。",
+            "penalty": 0.5
+          },
+          {
+            "id": "over_escalation",
+            "description": "在输入已声明材料完整、无当前逾期、偿债收入比未超过 50% 的情况下，主结论仍输出“建议补充材料”或“建议人工复核”而不是“建议进入后续审批”（过度转人工）。",
+            "penalty": 0.6
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "opt-duplicate-debt",
+      "dimension": "record_identity",
+      "difficulty": "medium",
+      "source": "fictional_operations_intake",
+      "task_type": "pre_loan_review",
+      "synthetic": true,
+      "deidentified": true,
+      "input": "虚构客户戊申请个人消费贷 15 万元、36 期，用途为装修。债务汇总表显示：月收入 18000 元；既有债务合计月还 5200 元，其中合同 L02 月还 1800 元。债务明细又单独列出合同 L02（月还 1800 元）。本次贷款月供 3500 元。无当前逾期，材料完整。请按 DEMO-CREDIT-2026.1 出具贷前审查建议。",
+      "reference": {
+        "answer": "债务汇总已包含合同 L02，明细中的 L02 不能重复计入；有效既有月债务为 5200 元；偿债收入比＝（5200＋3500）÷18000≈48.33%，未超过 50%；无当前逾期、材料完整，可建议进入后续审批，并说明按合同编号去重的依据。",
+        "answer_role": "reference",
+        "penalty_mode": "subtract",
+        "policy_version": "DEMO-CREDIT-2026.1",
+        "required_behaviors": [
+          {
+            "id": "dedupe",
+            "description": "识别汇总与明细中的合同 L02 为同一笔债务，只计一次，说明按合同编号去重。",
+            "weight": 0.25
+          },
+          {
+            "id": "ratio",
+            "description": "计算约 48.33%（(5200+3500)÷18000）；不得重复计入得到约 58.33%。",
+            "weight": 0.25
+          },
+          {
+            "id": "recommendation",
+            "description": "未超 50%、无当前逾期，建议进入后续审批。",
+            "weight": 0.25
+          },
+          {
+            "id": "evidence",
+            "description": "六段结构、引用政策、列出经去重的债务明细。",
+            "weight": 0.25
+          }
+        ],
+        "forbidden_behaviors": [
+          {
+            "id": "duplicate_count",
+            "description": "重复计入 L02 使比值超过 50% 或结论错误。",
+            "penalty": 1.0
+          },
+          {
+            "id": "invented_facts",
+            "description": "编造未提供的收入、债务、逾期或担保事实。",
+            "penalty": 0.5
+          },
+          {
+            "id": "over_escalation",
+            "description": "在输入已声明材料完整、无当前逾期，且按合同去重后比值未超过 50% 的情况下，主结论仍输出“建议补充材料”或“建议人工复核”而不是“建议进入后续审批”（过度转人工）。",
+            "penalty": 0.6
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "opt-duplicate-transfer",
+      "dimension": "record_identity",
+      "difficulty": "medium",
+      "source": "fictional_operations_intake",
+      "task_type": "pre_loan_review",
+      "synthetic": true,
+      "deidentified": true,
+      "input": "虚构客户辛申请个人消费贷 12 万元、24 期，用途为装修。客户经理提交的债务摘要与明细如下：摘要表列示合同 K01 月还 2500 元、合同 K02 月还 1500 元，合计月还 4000 元；明细表列示 K01 月还 2500 元、K01（已结清旧还款计划）月还 1200 元、K02 月还 1500 元。月收入 15000 元，本次贷款月供 3000 元；无当前逾期，材料完整。请按 DEMO-CREDIT-2026.1 出具贷前审查建议。",
+      "reference": {
+        "answer": "同一合同 K01 在摘要与明细中重复出现，且 K01 的月还 1200 元为已结清旧还款计划；应只保留 K01 当前有效月还 2500 元并只计一次，有效既有月债务＝2500＋1500＝4000 元；偿债收入比＝（4000＋3000）÷15000≈46.67%，未超过 50%；无当前逾期、材料完整，可建议进入后续审批，并说明合同号归并与旧还款计划剔除依据。",
+        "answer_role": "reference",
+        "penalty_mode": "subtract",
+        "policy_version": "DEMO-CREDIT-2026.1",
+        "required_behaviors": [
+          {
+            "id": "dedupe",
+            "description": "识别 K01 在摘要与明细中重复出现，且 1200 元为已结清旧还款计划；只保留 K01 当前有效月还 2500 元且只计一次，有效既有月债务 4000 元。",
+            "weight": 0.2
+          },
+          {
+            "id": "ratio",
+            "description": "计算偿债收入比约 46.67%（(4000+3000)÷15000）；不得把重复记录与旧还款计划全部相加得到约 54.67%。",
+            "weight": 0.2
+          },
+          {
+            "id": "recommendation",
+            "description": "因比值未超过 50%、无当前逾期、材料完整，建议进入后续审批。",
+            "weight": 0.4
+          },
+          {
+            "id": "evidence",
+            "description": "使用六段审查结构并引用 DEMO-CREDIT-2026.1，列出合同号归并与旧还款计划剔除的依据。",
+            "weight": 0.2
+          }
+        ],
+        "forbidden_behaviors": [
+          {
+            "id": "duplicate_count",
+            "description": "重复计入 K01 或已结清旧还款计划，导致既有月债务、比值或结论错误。",
+            "penalty": 1.0
+          },
+          {
+            "id": "invented_facts",
+            "description": "编造未提供的收入、债务、逾期或担保事实。",
+            "penalty": 0.5
+          },
+          {
+            "id": "over_escalation",
+            "description": "在输入已声明材料完整、无当前逾期，且按合同归并、剔除已结清旧还款计划后比值未超过 50% 的情况下，主结论仍输出“建议补充材料”或“建议人工复核”而不是“建议进入后续审批”（过度转人工）。",
+            "penalty": 0.6
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "opt-superseded-record",
+      "dimension": "record_time_validity",
+      "difficulty": "hard",
+      "source": "fictional_business_feedback",
+      "task_type": "pre_loan_review",
+      "synthetic": true,
+      "deidentified": true,
+      "input": "虚构客户己申请个人消费贷 25 万元、36 期，用途为教育支出。征信材料包含两条同一合同 C11 的记录：旧记录（2026-03-01）显示当前逾期 1 期；新记录（2026-06-01）标注“替代旧记录”，说明该合同已结清且当前逾期为 0。其余有效合同月债务合计 3000 元；月收入 20000 元；本次贷款月供 5000 元；材料清单完整。请按 DEMO-CREDIT-2026.1 出具贷前审查建议。",
+      "reference": {
+        "answer": "新记录明确替代旧记录且 C11 已结清：C11 不再计入既有债务，当前逾期为 0；有效既有月债务 3000 元；偿债收入比＝（3000＋5000）÷20000＝40%；无当前逾期、材料完整，可建议进入后续审批；应说明记录日期与替代关系。",
+        "answer_role": "reference",
+        "penalty_mode": "subtract",
+        "policy_version": "DEMO-CREDIT-2026.1",
+        "required_behaviors": [
+          {
+            "id": "supersession",
+            "description": "识别新记录明确替代旧记录、C11 已结清；旧记录中的当前逾期不作为当前有效事实。",
+            "weight": 0.2
+          },
+          {
+            "id": "ratio",
+            "description": "有效月债务 3000，计算 40%（(3000+5000)÷20000）。",
+            "weight": 0.2
+          },
+          {
+            "id": "recommendation",
+            "description": "当前无逾期、未超 50%，建议进入后续审批；不得把历史逾期当当前逾期而拒绝。",
+            "weight": 0.4
+          },
+          {
+            "id": "evidence",
+            "description": "六段结构、引用政策、列出记录日期/替代关系与采用依据。",
+            "weight": 0.2
+          }
+        ],
+        "forbidden_behaviors": [
+          {
+            "id": "stale_overdue",
+            "description": "把已被替代旧记录的当前逾期当作当前有效事实，据此拒绝或要求逾期复核。",
+            "penalty": 1.0
+          },
+          {
+            "id": "ignore_relationship",
+            "description": "未说明替代关系，直接忽略旧记录而不给依据。",
+            "penalty": 0.5
+          },
+          {
+            "id": "over_escalation",
+            "description": "在输入已声明材料完整、无当前逾期，且按替代关系采用新记录后比值未超过 50% 的情况下，主结论仍输出“建议补充材料”或“建议人工复核”而不是“建议进入后续审批”（过度转人工）。",
+            "penalty": 0.6
+          }
         ]
       }
     }

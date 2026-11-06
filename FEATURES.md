@@ -23,7 +23,7 @@ Python 样例 01–19 适配 `openjiuwen==0.1.16`，`25_harness_rsi` 适配 `ope
 | LLM-as-Judge 评测 | [17 evaluation_optimizer](samples/17_evaluation_optimizer/) |
 | MCP 工具协议 | [18 mcp_tools](samples/18_mcp_tools/) |
 | Agent Skill 注册与加载 | [19 skill_use](samples/19_skill_use/) |
-| Single Harness RSI：信贷 Prompt/Skill 演进，业务入口与 unittest 验收分离（真实模型验收状态见样例 README） | [25 harness_rsi](samples/25_harness_rsi/) |
+| Single Harness RSI：信贷 Prompt/Skill 演进（业界标准 Skill 目录：SKILL.md + references/ + scripts/；6+4 冻结评测集；业务入口与 unittest 验收分离，真实模型实测见样例 README） | [25 harness_rsi](samples/25_harness_rsi/) |
 | 用户提问与信息澄清（HITL `ask_user` 追问，运行者交互输入；Python/Java 双语言） | [26 consumer_loan_precheck_ask_user](samples/26_consumer_loan_precheck_ask_user/) |
 | Java 层级式 Agent-as-Tool：Master → SubAgent → SubAgent | [20 java_nested_agents](samples/20_java_nested_agents/) |
 | Java 完整调用链日志：OtelRail、输入输出、用量、错误、配置指纹与 JSONL | [21 java_call_trace](samples/21_java_call_trace/) |

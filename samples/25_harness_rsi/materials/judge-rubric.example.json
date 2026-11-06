@@ -3,7 +3,7 @@
   "schema_version": "1.0",
   "example_notice": "完整虚构示例，不是实测输出。",
   "owner": {"role": "风控/合规 + 信贷业务专家", "name": "陈合规、王专家（均虚构）", "department": "风险管理部/零售信贷部（虚构）"},
-  "inputs": {"dataset_id": "credit-review-optimization-v1", "case_id": "opt-current-overdue", "policy_version": "DEMO-CREDIT-2026.1", "output_contract": "六段贷前审查；只给建议，不作最终审批"},
+  "inputs": {"dataset_id": "credit-review-optimization-v2", "case_id": "opt-current-overdue", "policy_version": "DEMO-CREDIT-2026.1", "output_contract": "六段贷前审查；只给建议，不作最终审批"},
   "rubric": {
     "answer_role": "reference",
     "penalty_mode": "subtract",

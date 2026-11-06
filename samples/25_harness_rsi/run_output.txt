@@ -1,28 +1,13 @@
-[FAIL] 25_harness_rsi               (35.0s)  <-- 见下方输出
-e_id": "solver_7b7c0a56bc234afcbe6aa60d60635a9f.shell.execute_cmd_stream", "resource_type": "tool", "tag": "__global__", "card": "id=solver_7b7c0a56bc234afcbe6aa60d60635a9f.shell.execute_cmd_stream,name=execute_cmd_stream"}
-2026-11-02 14:49:53 | common | default_trace_id | INFO | Removed resource. resource_id=solver_7b7c0a56bc234afcbe6aa60d60635a9f.shell.execute_cmd_background, removed_tags=['__global__']
-2026-11-02 14:49:53 | runner | default_trace_id | INFO | {"event_id": "64c65692-9834-4967-8479-6ebf42bce6ad", "event_type": "remove_resource", "log_level": "INFO", "timestamp": "2026-11-02T14:49:53.292285+08:00", "module_type": "system", "module_id": "runner", "module_name": "runner", "status": "success", "message": "remove resource succeed", "metadata": {}, "resource_id": "solver_7b7c0a56bc234afcbe6aa60d60635a9f.shell.execute_cmd_background", "resource_type": "tool", "tag": "__global__", "card": "id=solver_7b7c0a56bc234afcbe6aa60d60635a9f.shell.execute_cmd_background,name=execute_cmd_background"}
-2026-11-02 14:49:53 | common | default_trace_id | INFO | [SingleHarnessExecutionBackend] end to execute case: opt-eligible-review
-2026-11-02 14:49:53 | common | default_trace_id | INFO | [CaseRunner] no artifacts directory in workspace
-2026-11-02 14:49:53 | common | default_trace_id | INFO | legacy workspace scratch removed: /Users/tianxiaoliang/codespace/openjiuwen-fin-sample/samples/25_harness_rsi/runs/credit-rsi-demo-002/evaluations/frozen_baseline/cases/c004_787f7b8f/workspace
-
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/tianxiaoliang/codespace/openjiuwen-fin-sample/.venv/lib/python3.12/site-packages/openjiuwen/rsi/harness_rsi/single_harness/iterative.py", line 220, in run
-    return await self._run(request, on_event=on_event)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/tianxiaoliang/codespace/openjiuwen-fin-sample/.venv/lib/python3.12/site-packages/openjiuwen/rsi/harness_rsi/single_harness/iterative.py", line 369, in _run
-    return await run_continuous(
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/tianxiaoliang/codespace/openjiuwen-fin-sample/.venv/lib/python3.12/site-packages/openjiuwen/rsi/harness_rsi/single_harness/continuous.py", line 153, in run_continuous
-    contexts = baseline_contexts(reference_eval, all_cases) if compare else None
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/tianxiaoliang/codespace/openjiuwen-fin-sample/.venv/lib/python3.12/site-packages/openjiuwen/rsi/harness_rsi/evaluator/baseline_context.py", line 119, in baseline_contexts
-    context.validate(case)
-  File "/Users/tianxiaoliang/codespace/openjiuwen-fin-sample/.venv/lib/python3.12/site-packages/openjiuwen/rsi/harness_rsi/evaluator/baseline_context.py", line 80, in validate
-    raise EvaluationInfrastructureError("Baseline is missing its original judged-artifact manifest")
-openjiuwen.rsi.harness_rsi.evaluator.errors.EvaluationInfrastructureError: Baseline is missing its original judged-artifact manifest
-
-
-===== 汇总: 0/1 通过 =====
-
-EXIT_CODE=1
+# main.py 实测运行输出（真实模型）
+# 时间：2026-11-06 10:10–10:33（Asia/Shanghai）
+# 环境：openjiuwen==0.1.20；DeepSeek 官方 OpenAI 兼容网关；
+#       执行/分析/裁判 deepseek-flash，优化器角色 deepseek-v4-pro
+# 说明：以下是 main.py 本次真实运行的完整终端输出（7 行）。
+================================================================================
+开始信贷 Harness 演进：credit-rsi-20261106T021056Z
+发布状态：published
+基线分数：51.67 分；最佳分数：100.00 分（满分 100 分）
+最佳 Harness：/Users/tianxiaoliang/codespace/openjiuwen-fin-sample/samples/25_harness_rsi/runs/credit-rsi-20261106T021056Z/member_optimizations/member_optimization_001/candidate_harness_refs.yaml
+发布包：/Users/tianxiaoliang/codespace/openjiuwen-fin-sample/samples/25_harness_rsi/runs/credit-rsi-20261106T021056Z/member_optimizations/current_harness_refs.yaml
+任务状态：/Users/tianxiaoliang/codespace/openjiuwen-fin-sample/samples/25_harness_rsi/runs/credit-rsi-20261106T021056Z/single_harness_state.yaml
+演进报告：/Users/tianxiaoliang/codespace/openjiuwen-fin-sample/samples/25_harness_rsi/runs/credit-rsi-20261106T021056Z/single_harness_report.yaml

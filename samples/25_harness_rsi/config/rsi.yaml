@@ -1,3 +1,5 @@
+# Single Harness RSI：单批冻结优化集 + 官方全量回放 + 两段式晋升。
+# 本文件是官方 AutoCoordinatingHarnessConfig 的输入结构，不是自建配置层。
 workspace_dir: runs/workspace
 max_epochs: 1
 
@@ -8,54 +10,65 @@ model_configs:
 
 data_loader:
   file_pattern: "*.json"
-  batch_size: 2
+  # 6 个冻结优化案例一次成批：一次归因、一次候选、一次全量回放，控制本地预算。
+  batch_size: 6
   batch_balance_keys: [dimension, difficulty, source, task_type]
 
 evaluator:
   backend: single_harness
   evaluation_method: llm_as_judge
   score_mode: continuous
-  solver_max_iterations: 8
+  # 裁判按冻结 rubric 绝对评分；候选与基线的分数比较由 RSI 控制面完成，
+  # 不把基线分数放进裁判上下文，减少长上下文噪声。
+  judge_baseline_comparison: false
+  solver_max_iterations: 12
   solver_on_max_iterations: error
-  solver_max_iterations_hard_limit: 8
-  judge_agent_max_iterations: 8
-  judge_timeout_sec: 300
-  judge_max_retries: 1
-  transient_case_retry_limit: 1
+  solver_max_iterations_hard_limit: 12
+  judge_agent_max_iterations: 6
+  judge_timeout_sec: 600
+  # 裁判是独立的 LLM Agent：弱结构化输出概率比执行阶段高，
+  # 给 4 次评估机会（每次内部还有 JSON 修复），避免单次格式抖动直接判基础设施失败。
+  judge_max_retries: 3
+  transient_case_retry_limit: 2
   output_repair:
-    max_attempts: 2
-    max_stagnant_attempts: 1
+    max_attempts: 4
+    max_stagnant_attempts: 3
 
 evaluation_result_analyzer:
   diagnosis_agent_max_retries: 1
   diagnosis_agent_max_concurrency: 1
   diagnosis_agent_max_iterations: 8
-  max_issues: 4
+  max_issues: 2
   evidence_limit_per_issue: 2
   output_repair:
-    max_attempts: 2
-    max_stagnant_attempts: 1
+    max_attempts: 3
+    max_stagnant_attempts: 2
 
 member_optimizer:
   # 样例意图：只提供并审查 Prompt/Skill；0.1.20 控制面白名单事实见 README。
   action_group_configs: [prompt, skill]
   max_roles_per_run: 1
-  max_actions_per_plan: 2
-  max_issue_attempts_per_batch: 1
-  max_repair_rounds_per_batch: 1
-  action_planning_max_attempts: 3
+  # 官方 planner 允许同一干预由最多 3 个相连动作跨表面实现；这里留 4 个动作的上限。
+  max_actions_per_plan: 4
+  # 候选可能修复目标案却回归其它案；允许第二轮带反馈重做，而不是一次失败即结束。
+  max_issue_attempts_per_batch: 2
+  max_repair_rounds_per_batch: 2
+  action_planning_max_attempts: 2
   execution_concurrency: 1
   role_execution_concurrency: 1
   action_execution_concurrency_per_role: 1
   sibling_candidate_count: 1
+  # 计划生成本身是结构化输出：首次计划常见问题只是字段类型不合 schema。
+  # 允许带校验反馈多次重试；连续同样的失败由 max_stagnant_attempts 止损。
   output_repair:
-    max_attempts: 2
-    max_stagnant_attempts: 1
+    max_attempts: 4
+    max_stagnant_attempts: 3
 
 scheduling:
   evaluation_strategy: hybrid
   coordination_strategy: team_first_single_pass
   full_evaluation_enabled: true
+  full_evaluation_concurrency: 2
 
 promotion:
   policy_version: continuous_two_stage_v2

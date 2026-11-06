@@ -1,33 +1,41 @@
+# 离线 UT 实测输出（不调用模型）
+# 时间：2026-11-06（Asia/Shanghai）
+# 命令：python -m unittest tests.test_harness_rsi_sample -v
+# 环境：Python 3.12、openjiuwen==0.1.20；未设置 API_BASE/API_KEY/MODEL_NAME
+================================================================================
 test_allows_prompt_skill_changes_and_empty_generated_registries (sample25_checks.HarnessRsiContractTest.test_allows_prompt_skill_changes_and_empty_generated_registries) ... ok
+test_data_loader_batch_covers_all_optimization_cases (sample25_checks.HarnessRsiContractTest.test_data_loader_batch_covers_all_optimization_cases) ... ok
 test_evaluation_requires_complete_real_execution_evidence (sample25_checks.HarnessRsiContractTest.test_evaluation_requires_complete_real_execution_evidence) ... ok
-test_no_improvement_run_is_completed_but_not_published (sample25_checks.HarnessRsiContractTest.test_no_improvement_run_is_completed_but_not_published) ... ok
-test_rejects_non_prompt_skill_changes (sample25_checks.HarnessRsiContractTest.test_rejects_non_prompt_skill_changes) ... ok
-test_run_preparation_is_independent_of_cwd_and_does_not_load_holdout (sample25_checks.HarnessRsiContractTest.test_run_preparation_is_independent_of_cwd_and_does_not_load_holdout) ... /Users/tianxiaoliang/codespace/openjiuwen-fin-sample/.venv/lib/python3.12/site-packages/openjiuwen/core/common/clients/connector_pool.py:17: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.14/migration/
+test_final_artifact_requires_complete_skill_directory (sample25_checks.HarnessRsiContractTest.test_final_artifact_requires_complete_skill_directory) ... /Users/tianxiaoliang/codespace/openjiuwen-fin-sample/.venv/lib/python3.12/site-packages/openjiuwen/core/common/clients/connector_pool.py:17: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.14/migration/
   class ConnectorPoolConfig(BaseModel):
-2026-11-03 14:36:34 | common | default_trace_id | INFO | Registered connector pool type: default
+2026-11-06 11:08:15 | common | default_trace_id | INFO | Registered connector pool type: default
 /Users/tianxiaoliang/codespace/openjiuwen-fin-sample/.venv/lib/python3.12/site-packages/openjiuwen/core/common/clients/http_client.py:22: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.14/migration/
   class SessionConfig(BaseModel):
-2026-11-03 14:36:35 | common | default_trace_id | INFO | Registered connector pool type: httpx
-2026-11-03 14:36:38 | common | default_trace_id | INFO | Registered query expression support for milvus
-2026-11-03 14:36:38 | common | default_trace_id | INFO | Registered query expression support for chroma
-2026-11-03 14:36:38 | common | default_trace_id | INFO | Registered parser ExcelParser for .xlsx
-2026-11-03 14:36:38 | common | default_trace_id | INFO | Registered parser ExcelParser for .csv
-2026-11-03 14:36:38 | common | default_trace_id | INFO | Registered parser ExcelParser for .tsv
-2026-11-03 14:36:38 | common | default_trace_id | INFO | Registered parser TxtMdParser for .txt
-2026-11-03 14:36:38 | common | default_trace_id | INFO | Registered parser TxtMdParser for .md
-2026-11-03 14:36:38 | common | default_trace_id | INFO | Registered parser TxtMdParser for .markdown
-2026-11-03 14:36:38 | common | default_trace_id | INFO | Registered parser HTMLFileParser for .htm
-2026-11-03 14:36:38 | common | default_trace_id | INFO | Registered parser HTMLFileParser for .html
-2026-11-03 14:36:38 | common | default_trace_id | INFO | Registered parser JSONParser for .json
-2026-11-03 14:36:38 | common | default_trace_id | INFO | Registered parser PDFParser for .pdf
-2026-11-03 14:36:38 | common | default_trace_id | INFO | Registered parser WordParser for .docx
-2026-11-03 14:36:38 | common | default_trace_id | INFO | Registered parser ImageParser for .png
-2026-11-03 14:36:38 | common | default_trace_id | INFO | Registered parser ImageParser for .jpg
-2026-11-03 14:36:38 | common | default_trace_id | INFO | Registered parser ImageParser for .jpeg
-2026-11-03 14:36:38 | common | default_trace_id | INFO | Registered parser ImageParser for .webp
-2026-11-03 14:36:38 | common | default_trace_id | INFO | Registered parser ImageParser for .gif
-2026-11-03 14:36:38 | common | default_trace_id | INFO | Registered parser ImageParser for .jfif
-/Users/tianxiaoliang/codespace/openjiuwen-fin-sample/.venv/lib/python3.12/site-packages/openjiuwen/core/memory/manage/mem_model/db_model.py:13: SADeprecationWarning: The declarative_mixin decorator was used only by the now removed mypy plugin so it has no longer any use and can be safely removed. (deprecated since: 2.1)
+2026-11-06 11:08:15 | common | default_trace_id | INFO | Registered connector pool type: httpx
+2026-11-06 11:08:16 | common | default_trace_id | INFO | Registered query expression support for milvus
+2026-11-06 11:08:16 | common | default_trace_id | INFO | Registered query expression support for chroma
+2026-11-06 11:08:16 | common | default_trace_id | INFO | Registered parser ExcelParser for .xlsx
+2026-11-06 11:08:16 | common | default_trace_id | INFO | Registered parser ExcelParser for .csv
+2026-11-06 11:08:16 | common | default_trace_id | INFO | Registered parser ExcelParser for .tsv
+2026-11-06 11:08:16 | common | default_trace_id | INFO | Registered parser TxtMdParser for .txt
+2026-11-06 11:08:16 | common | default_trace_id | INFO | Registered parser TxtMdParser for .md
+2026-11-06 11:08:16 | common | default_trace_id | INFO | Registered parser TxtMdParser for .markdown
+2026-11-06 11:08:16 | common | default_trace_id | INFO | Registered parser HTMLFileParser for .htm
+2026-11-06 11:08:16 | common | default_trace_id | INFO | Registered parser HTMLFileParser for .html
+2026-11-06 11:08:16 | common | default_trace_id | INFO | Registered parser JSONParser for .json
+2026-11-06 11:08:16 | common | default_trace_id | INFO | Registered parser PDFParser for .pdf
+2026-11-06 11:08:16 | common | default_trace_id | INFO | Registered parser WordParser for .docx
+2026-11-06 11:08:16 | common | default_trace_id | INFO | Registered parser ImageParser for .png
+2026-11-06 11:08:16 | common | default_trace_id | INFO | Registered parser ImageParser for .jpg
+2026-11-06 11:08:16 | common | default_trace_id | INFO | Registered parser ImageParser for .jpeg
+2026-11-06 11:08:16 | common | default_trace_id | INFO | Registered parser ImageParser for .webp
+2026-11-06 11:08:16 | common | default_trace_id | INFO | Registered parser ImageParser for .gif
+2026-11-06 11:08:16 | common | default_trace_id | INFO | Registered parser ImageParser for .jfif
+ok
+test_no_improvement_run_is_completed_but_not_published (sample25_checks.HarnessRsiContractTest.test_no_improvement_run_is_completed_but_not_published) ... ok
+test_published_run_requires_business_stage_improvement (sample25_checks.HarnessRsiContractTest.test_published_run_requires_business_stage_improvement) ... ok
+test_rejects_non_prompt_skill_changes (sample25_checks.HarnessRsiContractTest.test_rejects_non_prompt_skill_changes) ... ok
+test_run_preparation_is_independent_of_cwd_and_does_not_load_holdout (sample25_checks.HarnessRsiContractTest.test_run_preparation_is_independent_of_cwd_and_does_not_load_holdout) ... /Users/tianxiaoliang/codespace/openjiuwen-fin-sample/.venv/lib/python3.12/site-packages/openjiuwen/core/memory/manage/mem_model/db_model.py:13: SADeprecationWarning: The declarative_mixin decorator was used only by the now removed mypy plugin so it has no longer any use and can be safely removed. (deprecated since: 2.1)
   @declarative_mixin
 /Users/tianxiaoliang/codespace/openjiuwen-fin-sample/.venv/lib/python3.12/site-packages/openjiuwen/core/memory/manage/mem_model/db_model.py:24: SADeprecationWarning: The declarative_mixin decorator was used only by the now removed mypy plugin so it has no longer any use and can be safely removed. (deprecated since: 2.1)
   @declarative_mixin
@@ -36,18 +44,23 @@ test_run_preparation_is_independent_of_cwd_and_does_not_load_holdout (sample25_c
 ok
 test_runtime_refs_use_absolute_package_path_without_mutating_source (sample25_checks.HarnessRsiContractTest.test_runtime_refs_use_absolute_package_path_without_mutating_source) ... ok
 test_selects_published_or_retained_baseline (sample25_checks.HarnessRsiContractTest.test_selects_published_or_retained_baseline) ... ok
-test_datasets_are_unique_scored_and_holdout_is_disjoint (sample25_checks.HarnessRsiStaticContractTest.test_datasets_are_unique_scored_and_holdout_is_disjoint) ... ok
-test_harness_exposes_only_prompt_and_skill_resources (sample25_checks.HarnessRsiStaticContractTest.test_harness_exposes_only_prompt_and_skill_resources) ... ok
+test_stage_improvement_rejects_new_forbidden_triggers (sample25_checks.HarnessRsiContractTest.test_stage_improvement_rejects_new_forbidden_triggers) ... ok
+test_stage_improvement_requires_two_challenge_cases_and_protected_retention (sample25_checks.HarnessRsiContractTest.test_stage_improvement_requires_two_challenge_cases_and_protected_retention) ... ok
+test_business_entry_has_no_acceptance_logic_and_does_not_import_tests (sample25_checks.HarnessRsiStaticContractTest.test_business_entry_has_no_acceptance_logic_and_does_not_import_tests) ... ok
+test_datasets_are_frozen_scored_and_holdout_is_disjoint (sample25_checks.HarnessRsiStaticContractTest.test_datasets_are_frozen_scored_and_holdout_is_disjoint) ... ok
+test_dti_script_offline_contract_and_precision_boundary (sample25_checks.HarnessRsiStaticContractTest.test_dti_script_offline_contract_and_precision_boundary) ... ok
+test_hundred_point_display_converts_raw_scores (sample25_checks.HarnessRsiStaticContractTest.test_hundred_point_display_converts_raw_scores) ... ok
+test_manifest_declares_prompt_and_skill_surfaces_only (sample25_checks.HarnessRsiStaticContractTest.test_manifest_declares_prompt_and_skill_surfaces_only) ... ok
 test_materials_have_owners_evidence_and_signoff (sample25_checks.HarnessRsiStaticContractTest.test_materials_have_owners_evidence_and_signoff) ... ok
 test_model_config_contains_only_environment_credentials (sample25_checks.HarnessRsiStaticContractTest.test_model_config_contains_only_environment_credentials) ... ok
-test_rsi_config_has_real_judge_full_replay_and_small_budget (sample25_checks.HarnessRsiStaticContractTest.test_rsi_config_has_real_judge_full_replay_and_small_budget) ... ok
+test_official_loader_reads_prompt_and_skill_package (sample25_checks.HarnessRsiStaticContractTest.test_official_loader_reads_prompt_and_skill_package) ... ok
+test_prompt_guides_agent_to_use_pre_loan_review_skill (sample25_checks.HarnessRsiStaticContractTest.test_prompt_guides_agent_to_use_pre_loan_review_skill) ... ok
+test_rsi_config_matches_single_batch_acceptance (sample25_checks.HarnessRsiStaticContractTest.test_rsi_config_matches_single_batch_acceptance) ... ok
+test_skill_directory_follows_industry_layout (sample25_checks.HarnessRsiStaticContractTest.test_skill_directory_follows_industry_layout) ... ok
+test_skill_package_does_not_leak_evaluation_material (sample25_checks.HarnessRsiStaticContractTest.test_skill_package_does_not_leak_evaluation_material) ... ok
 test_static_assets_exist (sample25_checks.HarnessRsiStaticContractTest.test_static_assets_exist) ... ok
-test_keeps_existing_python_samples_runnable (test_run_all_samples.SampleRunnerTest.test_keeps_existing_python_samples_runnable) ... ok
-test_prefers_independent_tests_over_business_entrypoint (test_run_all_samples.SampleRunnerTest.test_prefers_independent_tests_over_business_entrypoint) ... ok
-test_propagates_maven_test_failure (test_run_all_samples.SampleRunnerTest.test_propagates_maven_test_failure) ... ok
-test_runs_maven_project_without_python_launcher (test_run_all_samples.SampleRunnerTest.test_runs_maven_project_without_python_launcher) ... ok
 
 ----------------------------------------------------------------------
-Ran 17 tests in 6.858s
+Ran 25 tests in 3.512s
 
 OK
