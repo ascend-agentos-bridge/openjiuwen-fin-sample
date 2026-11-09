@@ -138,3 +138,5 @@ python3 run_all_samples.py 20 21 23 24
 [Java benchmark](benchmarks/java_ascend_affinity/README.md) 是独立 Maven 工程，支持固定模型请求、多轮工具 Agent、并发、重复、预热及 off/on 对比，结束自动输出 `report.md`、JSONL、CSV 和配置快照。默认 `normal`，只需普通真实模型；`compare` 需要支持官方亲和协议的服务。样例 24 用 `AFFINITY_ENABLED=true` 开启，详见该样例 README。
 
 报告将指标分为客户端可采集统计和服务端两部分，缺失字段标不可用。没有昇腾服务端证据时，结论明确亲和效果未验证。benchmark 不加入默认全样例回归，以免意外执行长时间压测；其真实模型 JUnit 使用 `mvn -Preal-model test` 独立验收。
+
+- [27 信贷全流程超级智能体与对话树](samples/27_credit_full_process_super_agent/README.md)：Java Core 0.1.17；模糊需求澄清、团队/单Agent委派、运行者审批与签署、虚构放款与贷后；实时树显示实际激活节点。

@@ -1,0 +1,26 @@
+{
+  "name": "credit-super-agent-web",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite --host 127.0.0.1",
+    "test": "node --test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@a2ui/lit": "0.15.0",
+    "@a2ui/web_core": "0.15.0",
+    "d3-org-chart": "3.1.1",
+    "dompurify": "3.2.6",
+    "marked": "15.0.12"
+  },
+  "devDependencies": {
+    "vite": "6.1.0"
+  },
+  "private": true,
+  "type": "module"
+}

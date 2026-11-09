@@ -32,3 +32,5 @@ Python 样例 01–19 适配 `openjiuwen==0.1.16`，`25_harness_rsi` 适配 `ope
 | Java KV Cache 亲和开关、上下文压缩；普通模型流程验收，昇腾效果未验证 | [24 java_ascend_affinity](samples/24_java_ascend_affinity/) |
 
 性能实验工具：[Java 算力亲和 benchmark](benchmarks/java_ascend_affinity/README.md)，自动生成客户端指标、服务端指标获取位置及结论报告。
+
+- [27 信贷全流程超级智能体与对话树](samples/27_credit_full_process_super_agent/README.md)：Java Core 0.1.17；模糊需求澄清、团队/单Agent委派、运行者审批与签署、虚构放款与贷后；实时树显示实际激活节点。

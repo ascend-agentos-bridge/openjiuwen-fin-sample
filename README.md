@@ -176,3 +176,5 @@ samples/23_java_tool_rails/
 ```
 
 老 Java 样例不套用 Python 的 `main.py` 目录约定。20–22 保留的历史辅助脚本及 22 的本地 OTLP 测试接收器，见 [Java 指南](README-JAVA.md)。新样例的 Java 版统一放在场景目录的 `java/` 下（`pom.xml` + `src/main/java/` + `src/test/java/`）。
+
+- [27 信贷全流程超级智能体与对话树](samples/27_credit_full_process_super_agent/README.md)：Java Core 0.1.17；模糊需求澄清、团队/单Agent委派、运行者审批与签署、虚构放款与贷后；实时树显示实际激活节点。
