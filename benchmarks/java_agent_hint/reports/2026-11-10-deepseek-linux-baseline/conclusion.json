@@ -1,0 +1,12 @@
+{
+  "rule_version" : "1.0",
+  "thresholdPercent" : 5.0,
+  "requiredRepeatConsistency" : 0.8,
+  "evidence_status" : "NOT_VERIFIED",
+  "cacheIsolation" : "uncontrolled",
+  "evidence_note" : "不能据此确认 AgentHint 实际执行或归因于 AgentHint；外部附件不代表程序已验证真实性。",
+  "performance_status" : "BASELINE_ONLY",
+  "conclusion" : "仅建立真实模型基线，未进行 AgentHint 对比",
+  "reason_codes" : [ "BASELINE_ONLY" ],
+  "comparisons" : [ ]
+}

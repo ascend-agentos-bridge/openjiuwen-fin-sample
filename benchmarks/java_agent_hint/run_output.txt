@@ -1,0 +1,11 @@
+构建日志: /tmp/agent-hint-build.wOn2if
+模型: deepseek-flash；计划正式模型调用上限（每轮3次）: 12；预热另计。代码规则总结，不调用AI解释报告。
+baseline/continuous c=1 repeat=1 通过=2/2 wall=4.233s
+baseline/idle-resume c=1 repeat=1 通过=2/2 wall=6.657s
+执行状态: 完成
+测试结论: BASELINE_ONLY — 仅建立真实模型基线，未进行 AgentHint 对比
+分组结果: []
+证据说明: 不能据此确认 AgentHint 实际执行或归因于 AgentHint；外部附件不代表程序已验证真实性。
+测试报告: /work/benchmarks/java_agent_hint/reports/2026-11-10-deepseek-linux-baseline/report.md
+结构化结论: /work/benchmarks/java_agent_hint/reports/2026-11-10-deepseek-linux-baseline/conclusion.json
+原始记录目录: /work/benchmarks/java_agent_hint/reports/2026-11-10-deepseek-linux-baseline

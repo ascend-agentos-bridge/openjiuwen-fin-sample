@@ -1,0 +1,35 @@
+构建日志: /tmp/agent-hint-build.T5U6Ia
+Linux/Java AgentHint benchmark (SDK 0.1.17)
+--api-base URL --model-id ID (或 API_BASE / MODEL_NAME)，API_KEY 仅环境变量
+--mode baseline|compare|report (compare) --profile smoke|performance (smoke)
+--config FILE --workload both|continuous|idle-resume (both) --concurrency 1,4,8 (1)
+--sessions N (1/8) --rounds N (2/4) --repeats N (1/5) --warmup-rounds N (1)
+--idle-seconds N (5) --payload-chars N (8192) --max-tokens N (512)
+--request-timeout-seconds N (60) --batch-timeout-seconds N (1800)
+--min-change-percent N (5) --output NEW_DIRECTORY
+--group off|on --experiment-id ID --repeat-index N (单组要求 repeats=1)
+--cache-isolation uncontrolled|external --server-evidence FILE (仅附件，未自动验证)
+--mode report --inputs OFF_DIRECTORY --inputs ON_DIRECTORY (可重复)
+退出码: 0执行完成,1运行/校验失败,2配置/环境失败,130/143中断
+例: bash run_benchmark.sh --mode baseline --api-base https://api.deepseek.com --model-id deepseek-flash
+help_exit=0
+构建日志: /tmp/agent-hint-build.ulLSow
+模型: unreachable；计划正式模型调用上限（每轮3次）: 6；预热另计。代码规则总结，不调用AI解释报告。
+baseline/continuous c=1 repeat=1 通过=0/2 wall=0.201s
+执行状态: 失败
+测试范围: 仅基线
+测试结论: INVALID — 实验无效：存在运行或业务校验失败
+分组结果: []
+证据说明: 不能据此确认 AgentHint 实际执行或归因于 AgentHint；外部附件不代表程序已验证真实性。
+测试报告: /work/benchmarks/java_agent_hint/reports/2026-11-10-unreachable-verified/report.md
+结构化结论: /work/benchmarks/java_agent_hint/reports/2026-11-10-unreachable-verified/conclusion.json
+原始记录目录: /work/benchmarks/java_agent_hint/reports/2026-11-10-unreachable-verified
+unreachable_exit=1
+构建日志: /tmp/agent-hint-build.vmVLRo
+配置错误: IllegalArgumentException: 未知参数: invalid；报告未生成。
+invalid_argument_exit=2
+未找到 Maven；请安装 Maven 3.9+ 或设置 MAVEN_CMD。报告未生成。
+missing_maven_exit=2
+构建日志: /tmp/agent-hint-build.0O4MKe
+配置错误: IllegalArgumentException: 合并只接受compare原始单组报告；报告未生成。
+reject_baseline_merge_exit=2

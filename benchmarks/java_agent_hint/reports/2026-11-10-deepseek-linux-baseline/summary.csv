@@ -1,0 +1,7 @@
+group,workload,concurrency,roundType,planned,success,correct,p50Ms,p95Ms,p99Ms,throughput,usageCoverage
+baseline,continuous,1,all,2,2,2,2102.781001,,,0.4724888074028182,1.0
+baseline,continuous,1,first,1,1,1,2120.814043,,,,1.0
+baseline,continuous,1,subsequent,1,1,1,2102.781001,,,,1.0
+baseline,idle-resume,1,all,2,2,2,2277.67871,,,0.3004417845168882,1.0
+baseline,idle-resume,1,first,1,1,1,3360.728835,,,,1.0
+baseline,idle-resume,1,resumed,1,1,1,2277.67871,,,,1.0

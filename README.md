@@ -8,6 +8,7 @@
 |---|---|---|---|
 | Python 版 Agent Core | 01–19、25、26_consumer_loan_precheck_ask_user | 01–19 用 `openjiuwen==0.1.16`；25 用 `0.1.20`、`main.py` + `test.py`；新样例按场景目录，`python/` 用 `0.1.20` | 本文下方的 Python 说明 |
 | Java 版 Agent Core | 20–24、26_consumer_loan_precheck_ask_user | 老样例 `com.openjiuwen:agent-core-java:0.1.16`，Java `main` / Maven；新样例的 `java/` 同一版本 | [Java 版 README](README-JAVA.md) |
+| Java AgentHint | 28_credit_review_agent_hint | `com.openjiuwen:agent-core-java:0.1.17`，`java/` / Maven；Python 待实现 | [样例28](samples/28_credit_review_agent_hint/README.md) |
 
 两套 SDK 的项目结构和 API 分别以对应语言的官方示例为准。Java 开发者从 [Java 指南](README-JAVA.md) 的样例 23 开始，无需安装 Python 版 `openjiuwen`。
 
@@ -178,3 +179,7 @@ samples/23_java_tool_rails/
 老 Java 样例不套用 Python 的 `main.py` 目录约定。20–22 保留的历史辅助脚本及 22 的本地 OTLP 测试接收器，见 [Java 指南](README-JAVA.md)。新样例的 Java 版统一放在场景目录的 `java/` 下（`pom.xml` + `src/main/java/` + `src/test/java/`）。
 
 - [27 信贷全流程超级智能体与对话树](samples/27_credit_full_process_super_agent/README.md)：Java Core 0.1.17；模糊需求澄清、团队/单Agent委派、运行者审批与签署、虚构放款与贷后；实时树显示实际激活节点。
+
+## AgentHint：信贷复核与 Linux benchmark
+
+[样例 28](samples/28_credit_review_agent_hint/README.md) 使用 `com.openjiuwen:agent-core-java:0.1.17`，展示征信查询、多轮会话及缓存暂停、恢复、释放；Python 版待实现。[独立 benchmark 与 Linux 一键脚本](benchmarks/java_agent_hint/README.md) 支持配置模型地址、模型 ID、并发与重复次数，终端输出报告绝对路径和确定性代码生成的结论。DeepSeek 官方服务可用于真实业务基线验证；AgentHint off/on 性能及服务端执行效果需兼容推理环境，当前不得据普通服务基线宣称已验证。具体运行命令、指标边界与实际验收状态见各自 README。

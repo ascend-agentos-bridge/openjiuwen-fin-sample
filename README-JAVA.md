@@ -1,6 +1,8 @@
 # Java 版 Agent Core 样例（银行金融场景）
 
-本指南对应 **Java 版 openJiuwen Agent Core**，当前样例适配 **`com.openjiuwen:agent-core-java:0.1.16`**，覆盖老结构的 `samples/20_*` 至 `samples/24_*`；新结构场景样例的 Java 版放在 `samples/<场景>/java/`（如 [26_consumer_loan_precheck_ask_user](samples/26_consumer_loan_precheck_ask_user/java/README.md)）。Python 版的 `pip install openjiuwen`、`main.py` 目录约定不适用于 Java 样例。
+本指南对应 **Java 版 openJiuwen Agent Core**，老样例适配 **`com.openjiuwen:agent-core-java:0.1.16`**，覆盖老结构的 `samples/20_*` 至 `samples/24_*`；新结构场景样例的 Java 版放在 `samples/<场景>/java/`（如 [26_consumer_loan_precheck_ask_user](samples/26_consumer_loan_precheck_ask_user/java/README.md)）。Python 版的 `pip install openjiuwen`、`main.py` 目录约定不适用于 Java 样例。
+
+新增 [样例28 AgentHint](samples/28_credit_review_agent_hint/README.md) 适配 **`com.openjiuwen:agent-core-java:0.1.17`**；其 Python 版待实现。
 
 Java 业务入口在 `src/main/java/`，验收在 `src/test/java/`，通过 Maven 分别运行。返回[仓库总览与 Python 指南](README.md)。
 
@@ -140,3 +142,7 @@ python3 run_all_samples.py 20 21 23 24
 报告将指标分为客户端可采集统计和服务端两部分，缺失字段标不可用。没有昇腾服务端证据时，结论明确亲和效果未验证。benchmark 不加入默认全样例回归，以免意外执行长时间压测；其真实模型 JUnit 使用 `mvn -Preal-model test` 独立验收。
 
 - [27 信贷全流程超级智能体与对话树](samples/27_credit_full_process_super_agent/README.md)：Java Core 0.1.17；模糊需求澄清、团队/单Agent委派、运行者审批与签署、虚构放款与贷后；实时树显示实际激活节点。
+
+## AgentHint：信贷复核与 Linux benchmark
+
+[样例 28](samples/28_credit_review_agent_hint/README.md) 使用 `com.openjiuwen:agent-core-java:0.1.17`，展示征信查询、多轮会话及缓存暂停、恢复、释放；Python 版待实现。[独立 benchmark 与 Linux 一键脚本](benchmarks/java_agent_hint/README.md) 支持配置模型地址、模型 ID、并发与重复次数，终端输出报告绝对路径和确定性代码生成的结论。DeepSeek 官方服务可用于真实业务基线验证；AgentHint off/on 性能及服务端执行效果需兼容推理环境，当前不得据普通服务基线宣称已验证。具体运行命令、指标边界与实际验收状态见各自 README。

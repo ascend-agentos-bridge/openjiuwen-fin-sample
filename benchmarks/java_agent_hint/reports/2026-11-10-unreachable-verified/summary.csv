@@ -1,0 +1,4 @@
+group,workload,concurrency,roundType,planned,success,correct,p50Ms,p95Ms,p99Ms,throughput,usageCoverage
+baseline,continuous,1,all,2,0,0,,,,0.0,0.0
+baseline,continuous,1,first,1,0,0,,,,,0.0
+baseline,continuous,1,subsequent,1,0,0,,,,,0.0

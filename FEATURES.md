@@ -1,6 +1,6 @@
 # Agent Core 开发者特性与样例索引
 
-Python 样例 01–19 适配 `openjiuwen==0.1.16`，`25_harness_rsi` 适配 `openjiuwen==0.1.20`；新结构场景样例 `26_consumer_loan_precheck_ask_user` 的 Python 版适配 `openjiuwen==0.1.20`、Java 版适配 `com.openjiuwen:agent-core-java:0.1.16`；Java 样例 20–24 适配 `com.openjiuwen:agent-core-java:0.1.16`。本表列出现有样例覆盖的特性，未覆盖能力见根 README 与历史核验记录，不将未运行的能力标为已验收。
+Python 样例 01–19 适配 `openjiuwen==0.1.16`，`25_harness_rsi` 适配 `openjiuwen==0.1.20`；新结构场景样例 `26_consumer_loan_precheck_ask_user` 的 Python 版适配 `openjiuwen==0.1.20`、Java 版适配 `com.openjiuwen:agent-core-java:0.1.16`；Java 样例 20–24 适配 `com.openjiuwen:agent-core-java:0.1.16`；新增 `28_credit_review_agent_hint` 的 Java 版适配 `com.openjiuwen:agent-core-java:0.1.17`，Python 版待实现。本表列出现有样例覆盖的特性，未覆盖能力见根 README 与历史核验记录，不将未运行的能力标为已验收。
 
 | 特性 | 样例 |
 |---|---|
@@ -31,6 +31,11 @@ Python 样例 01–19 适配 `openjiuwen==0.1.16`，`25_harness_rsi` 适配 `ope
 | Java 自定义工具业务校验、审批中断恢复与异常重试；JUnit 独立验收 | [23 java_tool_rails](samples/23_java_tool_rails/) |
 | Java KV Cache 亲和开关、上下文压缩；普通模型流程验收，昇腾效果未验证 | [24 java_ascend_affinity](samples/24_java_ascend_affinity/) |
 
+| Java AgentHint：信贷复核、多轮缓存生命周期；Java SDK 0.1.17，Python 待实现，兼容服务效果待验收 | [28 credit_review_agent_hint](samples/28_credit_review_agent_hint/) |
+
 性能实验工具：[Java 算力亲和 benchmark](benchmarks/java_ascend_affinity/README.md)，自动生成客户端指标、服务端指标获取位置及结论报告。
 
 - [27 信贷全流程超级智能体与对话树](samples/27_credit_full_process_super_agent/README.md)：Java Core 0.1.17；模糊需求澄清、团队/单Agent委派、运行者审批与签署、虚构放款与贷后；实时树显示实际激活节点。
+
+
+配套 [Linux AgentHint benchmark](benchmarks/java_agent_hint/README.md)：真实模型基线、off/on 对照、确定性性能结论与原始记录；普通模型服务不构成 AgentHint 实际执行或性能收益证据。

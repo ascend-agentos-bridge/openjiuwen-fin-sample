@@ -1,0 +1,13 @@
+{
+  "rule_version" : "1.0",
+  "thresholdPercent" : 5.0,
+  "requiredRepeatConsistency" : 0.8,
+  "evidence_status" : "NOT_VERIFIED",
+  "cacheIsolation" : "uncontrolled",
+  "evidence_note" : "不能据此确认 AgentHint 实际执行或归因于 AgentHint；外部附件不代表程序已验证真实性。",
+  "test_scope" : "仅基线",
+  "performance_status" : "INVALID",
+  "conclusion" : "实验无效：存在运行或业务校验失败",
+  "reason_codes" : [ "批次失败，停止后续实验" ],
+  "comparisons" : [ ]
+}
