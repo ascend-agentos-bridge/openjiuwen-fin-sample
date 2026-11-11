@@ -21,6 +21,8 @@ env/
 *.env
 secrets/
 tokens/
+# sample27 本地模型配置（页面「模型设置」保存，含本机密钥，禁止提交）
+.sample27-model-config.json
 
 # OS
 .DS_Store

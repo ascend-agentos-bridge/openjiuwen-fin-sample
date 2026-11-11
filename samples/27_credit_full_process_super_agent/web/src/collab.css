@@ -1,0 +1,437 @@
+/* 团队协作实时信息（右栏）· 多智能体群聊样式
+ *
+ * 容器约定：宿主给 .collab-stream（#collab-stream）一个固定高度 + overflow:auto；
+ * 右栏可用宽度约 560–760px，所以所有尺寸按「紧凑但可读」设计：正文 11.5px、气泡最大 88%。
+ * 全部选择器以 .collab- 前缀命名，避免和页面里 d3 组织图 / A2UI 的样式互相污染。
+ */
+
+/* 宿主可能用 display 覆盖 [hidden]，这里显式兜住：占位与「回到最新」按钮用 hidden 切换 */
+.collab-stream [hidden] { display: none !important; }
+
+/* 宿主 #collab-stream 自带高度/内边距/字号/滚动条（style.css 的 .collab-stream），
+ * 这里只补组件单独挂载时的滚动兜底，不覆盖宿主的排版，避免两套 CSS 互相打架。
+ * 注意：宿主也用了 .collab-panel/.collab-header/.collab-tag/.collab-status 这几个
+ * 「容器级」类名；组件内部的事件标签统一用 .collab-act-tag，避免和头部的
+ * 「内部视图 · 客户不可见」徽标撞样式。 */
+.collab-stream {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #d6dce6 transparent;
+  text-align: left;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- 空态 / 等待态 ---------- */
+.collab-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 30px 18px 32px;
+  text-align: center;
+  color: #98a3b3;
+}
+.collab-empty-icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-bottom: 2px;
+  border-radius: 10px;
+  background: #f6f8fb;
+  border: 1px dashed #dde4ed;
+  color: #b3bcc8;
+  font-size: 14px;
+  line-height: 1;
+}
+.collab-empty-title {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: #8b96a8;
+}
+.collab-empty-sub {
+  margin: 0;
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  color: #adb6c3;
+}
+.collab-empty--waiting .collab-empty-icon {
+  color: #c7000b;
+  border-style: solid;
+  border-color: #f3d6d8;
+  background: #fff5f5;
+  animation: collab-breathe 1.8s ease-in-out infinite;
+}
+
+/* ---------- 一条消息 = 头像 + 身份行 + 气泡 ---------- */
+.collab-msg {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 9px;
+}
+.collab-msg:last-of-type { margin-bottom: 2px; }
+.collab-msg--right { flex-direction: row-reverse; }
+
+.collab-msg-avatar {
+  flex: 0 0 26px;
+  width: 26px;
+  height: 26px;
+  margin-top: 1px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  background: var(--collab-av-bg, #f1f5f9);
+  color: var(--collab-av-fg, #64748b);
+  border: 1px solid var(--collab-av-line, #e3e8ee);
+}
+
+.collab-msg-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.collab-msg--right .collab-msg-body { align-items: flex-end; }
+
+/* 身份行：短名 + 角色标签 + 工作状态 + 时间 */
+.collab-msg-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  max-width: 100%;
+  margin: 0 2px 4px;
+}
+.collab-msg--right .collab-msg-meta { justify-content: flex-end; }
+.collab-msg-name {
+  font-size: 11px;
+  font-weight: 650;
+  color: #2b3546;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+.collab-msg-role {
+  max-width: 132px;
+  height: 15px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 4px;
+  background: #f5f7fa;
+  border: 1px solid #edf0f5;
+  color: #9aa5b5;
+  font-size: 9px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.collab-msg-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 9px;
+  color: #a4aebb;
+  white-space: nowrap;
+}
+.collab-msg-state[data-state="working"] { color: #b3121c; }
+.collab-msg-state[data-state="working"]::before {
+  content: "";
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: collab-pulse 1.4s ease-in-out infinite;
+}
+.collab-msg-state[data-state="done"] { color: #299774; }
+.collab-msg-state[data-state="error"] { color: #cf3b3b; }
+.collab-msg-time {
+  font-size: 9px;
+  color: #b3bcc8;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ---------- 气泡 ---------- */
+.collab-msg-bubble {
+  max-width: 88%;
+  padding: 7px 10px 8px;
+  border: 1px solid #e7ebf1;
+  border-radius: 3px 12px 12px 12px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(18, 30, 50, 0.04);
+}
+.collab-msg--right .collab-msg-bubble {
+  border-radius: 12px 3px 12px 12px;
+  border-color: #f1d9db;
+  background: linear-gradient(180deg, #fff9f9 0%, #ffffff 100%);
+}
+/* review_master（主管汇总）用琥珀色高亮 */
+.collab-msg--accent .collab-msg-bubble {
+  border-color: #efdfc3;
+  background: linear-gradient(180deg, #fffdf6 0%, #ffffff 100%);
+}
+.collab-msg-bubble > * + * { margin-top: 7px; }
+
+/* ---------- 动作行 / 标签 ---------- */
+.collab-act {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0 0 4px;
+  font-size: 9.5px;
+  color: #98a3b3;
+}
+.collab-act-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 16px;
+  padding: 0 5px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.collab-act-tag--dispatch { color: #b3121c; background: #fff1f1; border-color: #f6d7d8; }
+.collab-act-tag--report { color: #1d7357; background: #f1faf6; border-color: #d6ecdf; }
+.collab-act-tag--summary { color: #8a5a12; background: #fdf7ea; border-color: #f0e3ca; }
+.collab-act-tag--operator { color: #5b4b9a; background: #f5f2fd; border-color: #e3dcf7; }
+.collab-act-tag--error { color: #b42318; background: #fef3f2; border-color: #fbd9d5; }
+.collab-arrow { font-size: 10px; line-height: 1; color: #c3cad4; }
+.collab-act-label { color: #a4aebb; white-space: nowrap; }
+.collab-mention {
+  display: inline-flex;
+  align-items: center;
+  height: 17px;
+  padding: 0 6px;
+  border: 1px solid #f7d9da;
+  border-radius: 999px;
+  background: #fff1f1;
+  color: #b3121c;
+  font-size: 9.5px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+.collab-block--report .collab-mention {
+  border-color: #d9ecdf;
+  background: #f2faf6;
+  color: #1d7357;
+}
+
+/* 正文：事件文本服务端已截断（task ≤ 240 / output ≤ 500 / result ≤ 240），这里只负责换行 */
+.collab-text {
+  margin: 0;
+  color: #3b4759;
+  font-size: 11.5px;
+  line-height: 1.62;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.collab-msg--right .collab-text { color: #43312f; }
+.collab-block--error .collab-text { color: #b42318; }
+
+/* ---------- 气泡内工具卡 ---------- */
+.collab-tool {
+  padding: 6px 8px 7px;
+  border: 1px solid #e3ecf4;
+  border-radius: 8px;
+  background: #f7fafd;
+}
+.collab-tool-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.collab-tool-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 5px;
+  border: 1px solid #d7e6f4;
+  border-radius: 5px;
+  background: #eef5fc;
+  color: #2c5d8f;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9.5px;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+.collab-tool-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  color: #8b97a7;
+  white-space: nowrap;
+}
+.collab-tool-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #299774;
+}
+.collab-tool-state[data-state="running"] { color: #b3121c; }
+.collab-tool-state[data-state="running"] .collab-tool-dot {
+  background: #c7000b;
+  animation: collab-pulse 1.4s ease-in-out infinite;
+}
+.collab-tool-state[data-state="error"] { color: #cf3b3b; }
+.collab-tool-state[data-state="error"] .collab-tool-dot { background: #cf3b3b; }
+
+.collab-tool-args {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 5px;
+}
+.collab-arg {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  height: 17px;
+  padding: 0 5px;
+  border: 1px solid #e6ecf3;
+  border-radius: 4px;
+  background: #fff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9px;
+  color: #7b8797;
+  white-space: nowrap;
+}
+.collab-arg-key { color: #54657c; font-weight: 600; }
+.collab-arg-value {
+  max-width: 132px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.collab-tool-result {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  margin: 5px 0 0;
+  color: #2c7a5b;
+  font-size: 10.5px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.collab-tool-mark { flex: none; font-weight: 700; line-height: 1.45; }
+.collab-tool-result-text { min-width: 0; }
+.collab-tool[data-state="error"] .collab-tool-result { color: #b42318; }
+
+/* submit_plan 的 6 阶段 chips：前 3 个本轮阶段（蓝）、后 3 个待启动（灰） */
+.collab-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+.collab-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 18px;
+  padding: 0 6px;
+  border: 1px dashed #dfe4eb;
+  border-radius: 999px;
+  background: #fff;
+  color: #9aa5b5;
+  font-size: 9px;
+  white-space: nowrap;
+}
+.collab-step-num { font-style: normal; font-size: 8.5px; color: #b3bcc8; }
+.collab-step--on {
+  border-style: solid;
+  border-color: #cfe1f6;
+  background: #eef5fd;
+  color: #2b5f9e;
+}
+.collab-step--on .collab-step-num { color: #2b6cb0; font-weight: 700; }
+
+/* ---------- 轮次结果分隔线 / 系统行 ---------- */
+.collab-system {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 3px 0 6px;
+  color: #a4aebb;
+  font-size: 9.5px;
+  letter-spacing: 0.02em;
+}
+.collab-system::before,
+.collab-system::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #eef1f5;
+}
+.collab-system-text { white-space: nowrap; }
+.collab-system--error { color: #c66; }
+.collab-system--error::before,
+.collab-system--error::after { background: #f7e4e4; }
+.collab-system--done { color: #a8b1bd; }
+
+/* ---------- 「↓ 回到最新」：滚动区底部吸底，不抢滚动 ---------- */
+.collab-jump {
+  position: sticky;
+  bottom: 3px;
+  z-index: 2;
+  display: block;
+  margin: 5px auto 2px;
+  padding: 4px 11px;
+  border: 1px solid #f0d3d5;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 3px 10px rgba(18, 30, 50, 0.12);
+  color: #b3121c;
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.5;
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease;
+}
+.collab-jump:hover { background: #fff7f7; border-color: #e9b6b9; }
+.collab-jump:focus-visible { outline: 2px solid rgba(199, 0, 11, 0.3); outline-offset: 1px; }
+
+/* ---------- 状态 chip（宿主头部 #collab-status）：只在宿主没上色时兜底 ---------- */
+.collab-status { transition: color 0.2s ease; }
+.collab-status[data-state="idle"] { color: #8d97a6; }
+.collab-status[data-state="running"] { color: #c7000b; }
+.collab-status[data-state="done"] { color: #299774; }
+.collab-status[data-state="error"] { color: #cf3b3b; }
+
+/* ---------- 动画（全部为 CSS 动画，无 JS 定时器） ---------- */
+@keyframes collab-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(199, 0, 11, 0.3); }
+  55% { opacity: 0.62; box-shadow: 0 0 0 3px rgba(199, 0, 11, 0); }
+}
+@keyframes collab-breathe {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .collab-msg-state[data-state="working"]::before,
+  .collab-tool-state[data-state="running"] .collab-tool-dot,
+  .collab-empty--waiting .collab-empty-icon { animation: none; }
+}
+
+/* ---------- 窄栏兜底（右栏 560–760px；更窄时进一步压缩） ---------- */
+@media (max-width: 1180px) {
+  .collab-stream { padding-left: 10px; padding-right: 10px; }
+  .collab-msg-bubble { max-width: 92%; }
+  .collab-msg-role { max-width: 96px; }
+  .collab-msg-avatar { flex-basis: 24px; width: 24px; height: 24px; border-radius: 7px; font-size: 12px; }
+}

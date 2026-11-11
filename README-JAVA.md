@@ -69,6 +69,8 @@ mvn -q compile exec:java
 
 Java 样例的默认模型与 Python 样例不同，不要直接套用 Python 版的默认值。其他专有配置以各样例 README 为准。
 
+> 25 及之后的样例以各自 README 为准；其中 **27 信贷超级智能体**支持在页面右上角「⚙ 模型设置」里直接填写并保存模型连接信息（本地持久化、重启生效），环境变量仍可作为回退，不再强制预先 export。
+
 ## Java 样例目录结构
 
 以不含 Python 启动器的样例 23 为例：
@@ -141,7 +143,7 @@ python3 run_all_samples.py 20 21 23 24
 
 报告将指标分为客户端可采集统计和服务端两部分，缺失字段标不可用。没有昇腾服务端证据时，结论明确亲和效果未验证。benchmark 不加入默认全样例回归，以免意外执行长时间压测；其真实模型 JUnit 使用 `mvn -Preal-model test` 独立验收。
 
-- [27 信贷全流程超级智能体与对话树](samples/27_credit_full_process_super_agent/README.md)：Java Core 0.1.17；模糊需求澄清、团队/单Agent委派、运行者审批与签署、虚构放款与贷后；实时树显示实际激活节点。
+- [27 信贷全流程超级智能体与对话树](samples/27_credit_full_process_super_agent/README.md)：Java Core 0.1.17；模糊需求澄清、团队/单Agent委派、运行者审批与签署、虚构放款与贷后；页面内模型设置（本地持久化）；右侧智能体架构图 + 团队协作实时信息（内部视图），客户对话用结论卡/业务卡片呈现；NDJSON 事件流驱动。
 
 ## AgentHint：信贷复核与 Linux benchmark
 

@@ -35,7 +35,7 @@ Python 样例 01–19 适配 `openjiuwen==0.1.16`，`25_harness_rsi` 适配 `ope
 
 性能实验工具：[Java 算力亲和 benchmark](benchmarks/java_ascend_affinity/README.md)，自动生成客户端指标、服务端指标获取位置及结论报告。
 
-- [27 信贷全流程超级智能体与对话树](samples/27_credit_full_process_super_agent/README.md)：Java Core 0.1.17；模糊需求澄清、团队/单Agent委派、运行者审批与签署、虚构放款与贷后；实时树显示实际激活节点。
+- [27 信贷全流程超级智能体与对话树](samples/27_credit_full_process_super_agent/README.md)：Java Core 0.1.17；模糊需求澄清、团队/单Agent委派、运行者审批与签署、虚构放款与贷后；页面内模型设置（本地持久化）；右侧智能体架构图 + 团队协作实时信息（内部视图），客户对话用结论卡/业务卡片呈现；NDJSON 事件流驱动。
 
 
 配套 [Linux AgentHint benchmark](benchmarks/java_agent_hint/README.md)：真实模型基线、off/on 对照、确定性性能结论与原始记录；普通模型服务不构成 AgentHint 实际执行或性能收益证据。

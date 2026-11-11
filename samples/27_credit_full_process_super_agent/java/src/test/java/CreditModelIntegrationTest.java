@@ -8,7 +8,9 @@ import static org.junit.jupiter.api.Assertions.*;
 class CreditModelIntegrationTest {
     private Object run(String query, CreditDomainService domain, Set<String> active) {
         assertNotNull(System.getenv("API_KEY"), "真实模型测试必须配置 API_KEY");
-        Object result = CreditAgents.run(query, domain, (id, state) -> active.add(id));
+        Object result = CreditAgents.run(query, domain, event -> {
+            if ("agent".equals(event.get("type"))) active.add(String.valueOf(event.get("agent")));
+        });
         assertNotNull(result);
         assertFalse(result instanceof Map<?, ?> map && "error".equals(map.get("result_type")), String.valueOf(result));
         System.out.println("输入: " + query);

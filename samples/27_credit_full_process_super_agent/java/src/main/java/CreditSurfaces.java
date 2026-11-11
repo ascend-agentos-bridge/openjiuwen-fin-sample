@@ -1,6 +1,63 @@
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.*;
 /** Trusted business facts rendered by the official A2UI basic catalog. */
 public final class CreditSurfaces {
+    private static final java.util.Locale FORMAT_LOCALE=java.util.Locale.US;
+    private static Map<String,Object> fact(String label,String value){return Map.of("label",label,"value",value);}
+    private static String money(double value,String pattern){
+        DecimalFormat format=new DecimalFormat(pattern,DecimalFormatSymbols.getInstance(FORMAT_LOCALE));
+        return "¥"+format.format(value);
+    }
+    private static String percent(double rate){
+        return BigDecimal.valueOf(rate).multiply(BigDecimal.valueOf(100)).setScale(2,RoundingMode.HALF_UP).stripTrailingZeros().toPlainString()+"%";
+    }
+    private static String tone(String status){
+        return switch(status){
+            case "批准","合同待签署","已签署并授权放款","已放款"->"ok";
+            case "待人工审批","待补件"->"warn";
+            case "拒绝"->"danger";
+            default->"info";
+        };
+    }
+    private static String nextStep(String status){
+        return switch(status){
+            case "待人工审批"->"等待审批人员确认（演示角色），批准后可继续准备合同";
+            case "批准"->"可以准备合同";
+            case "合同待签署"->"等待客户签署及放款授权";
+            case "已签署并授权放款"->"可以继续办理放款";
+            case "已放款"->"可查询还款安排";
+            case "拒绝"->"申请已被拒绝";
+            case "待补件"->"请补充经营流水与购销合同";
+            default->null;
+        };
+    }
+    /** Customer-facing structured reply; read-only view of the business snapshots. */
+    static Map<String,Object> reply(CreditDomainService domain) {
+        List<Object> cases=new ArrayList<>();
+        for(Map<String,Object> snapshot:domain.snapshots()) {
+            String customer=String.valueOf(snapshot.get("customer_id"));
+            String status=String.valueOf(snapshot.get("status"));
+            Map<String,Object> item=new LinkedHashMap<>();
+            item.put("customer_id",customer);
+            item.put("status",status);
+            item.put("tone",tone(status));
+            List<Object> facts=new ArrayList<>();
+            if(snapshot.get("quote") instanceof Map<?,?> quote){
+                facts.add(fact("申请金额",money(((Number)quote.get("amount")).doubleValue(),"#,##0.##")));
+                facts.add(fact("还款期限",quote.get("months")+" 期"));
+                facts.add(fact("年化利率",percent(((Number)quote.get("annual_rate")).doubleValue())));
+                facts.add(fact("每月还款",money(((Number)quote.get("monthly_payment")).doubleValue(),"#,##0.00")));
+            }
+            item.put("facts",facts);
+            String nextStep=nextStep(status);
+            if(nextStep!=null)item.put("next_step",nextStep);
+            cases.add(item);
+        }
+        return Map.of("cases",cases);
+    }
     static Map<String,Object> text(String id,String value){return Map.of("id",id,"component","Text","text",value);}
     private static void metric(List<Object> components,String id,String label,String value){
         components.add(Map.of("id",id+"Label","component","Text","text",label,"variant","caption"));
@@ -16,10 +73,10 @@ public final class CreditSurfaces {
             List<Object> components=new ArrayList<>(); List<String> children=new ArrayList<>();
             components.add(Map.of("id","title","component","Text","text",customer+" · "+status,"variant","h3"));children.add("title");
             if(snapshot.get("quote") instanceof Map<?,?> quote){
-                metric(components,"amount","申请金额","¥"+quote.get("amount"));
+                metric(components,"amount","申请金额",String.format("¥%,.0f",((Number)quote.get("amount")).doubleValue()));
                 metric(components,"term","还款期限",quote.get("months")+" 期");
-                metric(components,"rate","年化利率",(((Number)quote.get("annual_rate")).doubleValue()*100)+"%");
-                metric(components,"monthly","每月还款","¥"+quote.get("monthly_payment"));
+                metric(components,"rate","年化利率",String.format("%.1f%%",((Number)quote.get("annual_rate")).doubleValue()*100));
+                metric(components,"monthly","每月还款",String.format("¥%,.2f",((Number)quote.get("monthly_payment")).doubleValue()));
                 components.add(Map.of("id","metrics1","component","Row","children",List.of("amount","term"),"justify","spaceBetween"));children.add("metrics1");
                 components.add(Map.of("id","metrics2","component","Row","children",List.of("rate","monthly"),"justify","spaceBetween"));children.add("metrics2");
             }
