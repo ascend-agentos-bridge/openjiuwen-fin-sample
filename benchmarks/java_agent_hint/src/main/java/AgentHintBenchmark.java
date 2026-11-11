@@ -34,6 +34,8 @@ public final class AgentHintBenchmark {
  static int run(BenchmarkOptions o)throws Exception{
   Path output=o.output();if(Files.exists(output))throw new IllegalArgumentException("output 已存在，请选择新目录");Files.createDirectories(output);
   if(o.str("mode").equals("report"))return merge(o,output);
+  System.out.println("测试任务: "+(o.str("mode").equals("compare")?"AgentHint off/on 自动对比":"普通模型小规模检查")+"；并发="+o.str("concurrency")+"，会话="+o.integer("sessions")+"，轮数="+o.integer("rounds")+"，重复="+o.integer("repeats"));
+  System.out.println("本次报告目录: "+output);
   var manifest=manifest(o);List<BenchmarkMetrics.Batch>batches=new ArrayList<>();List<String> errors=new ArrayList<>();writeJson(output.resolve("run-manifest.json"),manifest);
   if(!o.str("server-evidence").isEmpty())Files.copy(Path.of(o.str("server-evidence")),output.resolve("server-evidence.txt"));
   Thread owner=Thread.currentThread();CountDownLatch finished=new CountDownLatch(1);

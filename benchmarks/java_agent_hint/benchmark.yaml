@@ -1,0 +1,11 @@
+# 修改模型连接后，直接运行 bash run_benchmark.sh 即可开始 off/on 对比。
+# 服务需支持 AgentHint 协议、工具调用、流式返回及 thinking.type=disabled。
+# 密钥通过环境变量 API_KEY 提供，不写入此文件。
+api-base: "http://127.0.0.1:8000/v1"
+model-id: "your-model-id"
+
+# 以下是测试规模；不确定时保留默认值。
+# 总会话数由并发自动确定（至少8），通常无需填写 sessions。
+concurrency: [1]
+rounds: 4
+repeats: 5

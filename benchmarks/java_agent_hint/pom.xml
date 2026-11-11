@@ -12,6 +12,11 @@
         <excludedGroups>integration</excludedGroups>
     </properties>
     <dependencies>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+            <version>2.21.5</version>
+        </dependency>
 <dependency><groupId>ch.qos.logback</groupId><artifactId>logback-classic</artifactId><version>1.5.37</version></dependency>
         <dependency>
             <groupId>com.openjiuwen</groupId>

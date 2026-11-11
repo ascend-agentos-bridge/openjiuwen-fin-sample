@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 # Build once per invocation; forward each argument without shell evaluation.
 set -uo pipefail
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  printf '%s\n' '用法：bash run_benchmark.sh [配置.yaml]' \
+    '默认读取脚本旁 benchmark.yaml，自动运行 off/on 对比，报告按时间戳保存。' \
+    '只需修改 YAML 中模型地址、模型 ID；密钥通过 API_KEY 环境变量提供。' \
+    '辅助：check [配置.yaml] 普通模型小规模试跑；merge DIR DIR... 合并已有结果。'
+  exit 0
+fi
 benchmark_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)" || exit 2
 if (( BASH_VERSINFO[0] < 4 )); then
   printf '%s\n' '需要 Bash 4 或更新版本。' >&2
@@ -27,13 +34,15 @@ if [[ ! "$maven_version" =~ $maven_pattern ]] || (( BASH_REMATCH[1] < 3 || (BASH
   printf '%s\n' '需要 Maven 3.9 或更新版本；报告未生成。' >&2
   exit 2
 fi
-build_log="$(mktemp "${TMPDIR:-/tmp}/agent-hint-build.XXXXXX")" || exit 2
-printf '构建日志: %s\n' "$build_log"
-if ! "$maven_cmd" -q -B -f "$benchmark_dir/pom.xml" -DskipTests package >"$build_log" 2>&1; then
-  printf '构建失败；报告未生成。请查看: %s\n' "$build_log" >&2
-  exit 2
-fi
 benchmark_jar="$benchmark_dir/target/agent-hint-benchmark.jar"
+if [[ ! -f "$benchmark_jar" ]] || [[ "$benchmark_dir/pom.xml" -nt "$benchmark_jar" ]] || [[ -n "$(find "$benchmark_dir/src" -type f -newer "$benchmark_jar" -print -quit 2>/dev/null)" ]]; then
+  build_log="$(mktemp "${TMPDIR:-/tmp}/agent-hint-build.XXXXXX")" || exit 2
+  printf '正在准备运行程序；构建日志: %s\n' "$build_log"
+  if ! "$maven_cmd" -q -B -f "$benchmark_dir/pom.xml" -DskipTests package >"$build_log" 2>&1; then
+    printf '构建失败；报告未生成。请查看: %s\n' "$build_log" >&2
+    exit 2
+  fi
+fi
 if [[ ! -f "$benchmark_jar" ]]; then
   printf '构建产物不存在: %s；报告未生成。\n' "$benchmark_jar" >&2
   exit 2
