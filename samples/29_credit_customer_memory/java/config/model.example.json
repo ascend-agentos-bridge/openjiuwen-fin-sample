@@ -1,0 +1,20 @@
+{
+  "chat": {
+    "provider": "OpenAI 兼容",
+    "apiBase": "http://127.0.0.1:1234/v1",
+    "apiKey": "lm-studio",
+    "model": "google/gemma-4-e4b",
+    "temperature": 0.2,
+    "maxTokens": 2048
+  },
+  "memory": {
+    "provider": "OpenAI 兼容",
+    "apiBase": "http://127.0.0.1:1234/v1",
+    "apiKey": "lm-studio",
+    "model": "google/gemma-4-e4b",
+    "embeddingApiBase": "http://127.0.0.1:1234/v1/embeddings",
+    "embeddingApiKey": "lm-studio",
+    "embeddingModel": "text-embedding-nomic-embed-text-v1.5",
+    "maxTokens": 2048
+  }
+}

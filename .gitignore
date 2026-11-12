@@ -41,3 +41,9 @@ target/
 samples/25_harness_rsi/runs/
 samples/25_harness_rsi/data/batch_plan.yaml
 samples/25_harness_rsi/data/dataset_profile.yaml
+
+# sample29 runtime: Java data, logs and local model config (API keys never committed)
+samples/29_credit_customer_memory/java/data/
+samples/29_credit_customer_memory/java/logs/
+samples/29_credit_customer_memory/java/config/model.local.json
+samples/29_credit_customer_memory/.data/

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>信贷智能体 · 客户对话与记忆</title>
+  <meta name="description" content="客户与信贷智能体的对话，以及智能体记住的信息、图记忆与记忆加工流程。">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <noscript>
+    <div class="noscript-note">本页面需要启用 JavaScript 才能加载对话与记忆数据。</div>
+  </noscript>
+
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-mark">智</div>
+      <div class="brand-text">
+        <strong>信贷智能体</strong>
+        <span>客户对话中的长期记忆</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <span class="demo-pill" title="本页数据全部来自本地 Java 后端与真实模型调用">Java 样例 · 本地运行</span>
+      <button id="model-chip" class="model-chip is-off" type="button" data-act="open-settings" title="打开模型设置">
+        <span class="status-dot"></span>
+        <span id="model-chip-text">检查模型配置…</span>
+      </button>
+      <button id="btn-settings" class="quiet-btn" type="button" data-act="open-settings">模型设置</button>
+    </div>
+  </header>
+
+  <div id="error-bar" class="error-bar" role="alert" hidden>
+    <span class="error-icon" aria-hidden="true">!</span>
+    <span id="error-text" class="error-text"></span>
+    <button id="btn-error-retry" class="error-retry" type="button" data-act="error-retry">重试</button>
+    <button id="btn-error-close" class="error-close" type="button" data-act="error-close" title="关闭提示">×</button>
+  </div>
+
+  <main class="app-body">
+    <aside id="sidebar" class="sidebar" aria-label="历史会话">
+      <div class="side-head">
+        <span class="side-title">会话</span>
+        <button id="btn-new-session" class="icon-btn side-new" type="button" data-act="new-session" title="开启新对话">＋</button>
+        <button id="btn-toggle-sidebar" class="icon-btn side-toggle" type="button" data-act="toggle-sidebar" title="收起会话列表">‹</button>
+      </div>
+      <div id="session-list" class="side-list"></div>
+      <div id="side-foot" class="side-foot">记忆会随对话自动沉淀</div>
+    </aside>
+
+    <section class="panel chat-panel" aria-label="客户与智能体的对话">
+      <header class="chat-head">
+        <div class="avatar avatar-customer" aria-hidden="true">客</div>
+        <div class="chat-person">
+          <b>客户 ↔ 信贷智能体</b>
+          <span id="chat-sub">正在加载会话…</span>
+        </div>
+        <div class="chat-head-right">
+          <span id="session-pill" class="session-pill" hidden></span>
+          <span id="history-tag" class="history-tag" hidden>历史会话</span>
+        </div>
+      </header>
+      <div id="history-note" class="chat-history-note" hidden>
+        <span>正在回看历史会话（只读）。右侧展示的是智能体当前记住的信息。</span>
+        <button id="btn-back-current" class="ghost-btn" type="button" data-act="back-current">回到当前对话</button>
+      </div>
+      <div id="chat-scroll" class="chat-scroll"></div>
+      <div id="composer-status" class="composer-status" hidden>
+        <span class="pulse-dot" aria-hidden="true"></span>
+        <span id="composer-status-text"></span>
+      </div>
+      <div id="composer" class="composer">
+        <input id="composer-input" type="text" maxlength="500" autocomplete="off"
+               placeholder="以客户身份回复…" aria-label="客户消息" disabled>
+        <button id="btn-send" class="send-btn" type="button" data-act="send" disabled>发送</button>
+      </div>
+    </section>
+
+    <aside class="panel memory-panel" aria-label="智能体的记忆">
+      <header class="memory-head">
+        <div class="memory-title">智能体的记忆 <span id="memory-count" class="memory-count">0</span></div>
+        <div class="memory-sub">从对话里自动记住的信息</div>
+      </header>
+      <div id="storage-card" class="storage-card"></div>
+      <div id="memory-tabs" class="memory-tabs" role="tablist"></div>
+      <div id="tab-content" class="memory-tab-content"></div>
+    </aside>
+  </main>
+
+  <div id="modal-root"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
