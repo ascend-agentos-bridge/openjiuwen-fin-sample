@@ -30,9 +30,9 @@ public final class ModelSettings {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static final class Chat {
         public String provider = "OpenAI 兼容";
-        public String apiBase = env("CHAT_API_BASE", env("API_BASE", "http://127.0.0.1:1234/v1"));
-        public String apiKey = env("CHAT_API_KEY", env("API_KEY", "lm-studio"));
-        public String model = env("CHAT_MODEL", env("MODEL_NAME", "google/gemma-4-e4b"));
+        public String apiBase = env("CHAT_API_BASE", env("API_BASE", "https://api.deepseek.com"));
+        public String apiKey = env("CHAT_API_KEY", env("API_KEY", ""));
+        public String model = env("CHAT_MODEL", env("MODEL_NAME", "deepseek-flash"));
         public double temperature = 0.2;
         public int maxTokens = 2048;
     }
@@ -40,9 +40,9 @@ public final class ModelSettings {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static final class Memory {
         public String provider = "OpenAI 兼容";
-        public String apiBase = env("MEMORY_API_BASE", env("API_BASE", "http://127.0.0.1:1234/v1"));
-        public String apiKey = env("MEMORY_API_KEY", env("API_KEY", "lm-studio"));
-        public String model = env("MEMORY_MODEL", env("MODEL_NAME", "google/gemma-4-e4b"));
+        public String apiBase = env("MEMORY_API_BASE", env("API_BASE", "https://api.deepseek.com"));
+        public String apiKey = env("MEMORY_API_KEY", env("API_KEY", ""));
+        public String model = env("MEMORY_MODEL", env("MODEL_NAME", "deepseek-flash"));
         public String embeddingApiBase = env("EMBED_API_BASE",
                 env("API_BASE", "http://127.0.0.1:1234/v1") + "/embeddings");
         public String embeddingApiKey = env("EMBED_API_KEY", env("API_KEY", "lm-studio"));

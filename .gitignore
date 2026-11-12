@@ -47,3 +47,8 @@ samples/29_credit_customer_memory/java/data/
 samples/29_credit_customer_memory/java/logs/
 samples/29_credit_customer_memory/java/config/model.local.json
 samples/29_credit_customer_memory/.data/
+
+# sample29 Agent Memory local runtime clone/venv
+samples/29_credit_customer_memory/.runtime/
+samples/29_credit_customer_memory/memory-service/model.local.env
+samples/29_credit_customer_memory/memory-service/.config.yml.portal-*

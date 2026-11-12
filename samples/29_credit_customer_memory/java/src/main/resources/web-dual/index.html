@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>信贷智能体 · Agent Memory 双回答</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="logo">智</span><div><b>信贷智能体</b><small>Agent Memory · MemoryRail 双回答</small></div></div>
+  <div class="top-right">
+    <span id="am-chip" class="chip off">Agent Memory 连接中…</span>
+    <a id="portal-link" class="btn ghost" href="#" target="_blank" rel="noopener">打开记忆管理 ↗</a>
+    <button id="settings-btn" class="btn ghost" type="button">模型设置</button>
+    <button id="reset-btn" class="btn ghost" type="button">清空记忆</button>
+  </div>
+</header>
+<main class="layout">
+  <aside class="sidebar panel">
+    <section class="service-card">
+      <div class="service-head"><span class="dot" id="service-dot"></span><b>Agent Memory 服务</b></div>
+      <div id="service-url" class="muted small">http://127.0.0.1:8137</div>
+      <div class="service-stats"><span><b id="mem-count">0</b> 条记忆</span><span id="service-health" class="muted small">检查中…</span></div>
+      <a id="portal-link-2" class="btn primary block" href="#" target="_blank" rel="noopener">查看原始记忆数据</a>
+    </section>
+    <div class="side-head"><b>会话</b><button id="new-session" class="icon-btn" title="开启新对话">＋</button></div>
+    <div id="sessions" class="sessions"></div>
+    <div class="scenario-box">
+      <label for="scenario-select">演示脚本</label>
+      <select id="scenario-select"></select>
+      <p id="scenario-desc" class="muted small"></p>
+      <ol id="scenario-steps"></ol>
+    </div>
+    <div class="side-foot"><a id="portal-link-3" href="#" target="_blank" rel="noopener">Agent Memory Portal ↗</a><span>原型数据来自真实服务，页面只展示 API 返回内容</span></div>
+  </aside>
+
+  <section class="chat panel">
+    <div class="chat-head"><div><b id="chat-title">新的咨询</b><span id="chat-meta" class="muted small"></span></div><span class="pill">双回答对照</span></div>
+    <div id="messages" class="messages"></div>
+    <div id="typing" class="typing" hidden><span></span><span></span><span></span> 正在分别运行 有记忆 / 基线 两个 Agent…</div>
+    <div class="composer">
+      <textarea id="input" rows="2" placeholder="以客户身份输入，例如：我想申请经营贷……（Enter 发送，Shift+Enter 换行）"></textarea>
+      <button id="send" class="send">发送</button>
+    </div>
+    <div id="error" class="error" hidden></div>
+  </section>
+
+  <aside class="memory panel">
+    <div class="memory-head"><div><b>记忆工作台</b><span class="muted small">Agent Memory 返回的真实记录</span></div><button id="refresh" class="icon-btn" title="刷新">↻</button></div>
+    <div class="tabs">
+      <button class="tab active" data-tab="memory">记忆演进</button>
+      <button class="tab" data-tab="recall">本轮召回</button>
+      <button class="tab" data-tab="service">服务</button>
+    </div>
+    <div id="tab-memory" class="tab-body">
+      <div class="memory-tools"><span id="memory-summary" class="muted small">0 条</span></div>
+      <div id="evolve-status" class="evolve-status" hidden></div>
+      <div id="memories" class="memory-list"></div>
+    </div>
+    <div id="tab-recall" class="tab-body hidden"><div id="recall" class="recall-list"></div></div>
+    <div id="tab-service" class="tab-body hidden">
+      <div class="service-detail">
+        <p>记忆服务：<b id="svc-url"></b></p>
+        <p>Portal：<a id="svc-portal" target="_blank" rel="noopener">打开管理页</a></p>
+        <p>对话模型：<b id="svc-model"></b></p>
+        <p class="muted">Agent Memory 负责抽取、更新、合并、关联、演进；Java Agent Core 通过 ExternalMemoryRail（MemoryProvider）接入。Portal 可直接查看/纠正/遗忘原始记忆。</p>
+      </div>
+    </div>
+  </aside>
+</main>
+<div id="settings-mask" class="mask" hidden>
+  <div class="settings-modal">
+    <div class="settings-head"><b>模型服务配置</b><button id="settings-close" class="icon-btn" type="button">×</button></div>
+    <p class="muted small">保存写入本机配置（gitignored）；重启 Java 进程 / Agent Memory 服务后生效。DeepSeek 对话与记忆抽取共用同一个 API Key；Embedding 默认走本机 LM Studio。API Key 留空表示沿用已保存值。</p>
+    <h4>对话模型（Java Agent Core）</h4>
+    <div class="field-grid">
+      <label>API Base<input id="chat-base"></label>
+      <label>模型<input id="chat-model"></label>
+      <label>API Key<input id="chat-key" type="password" placeholder="填写 DeepSeek API Key（默认 deepseek-flash）"></label>
+      <label>温度<input id="chat-temp" type="number" step="0.1" min="0" max="2"></label>
+    </div>
+    <h4>Agent Memory 服务模型</h4>
+    <div class="field-grid">
+      <label>LLM API Base<input id="am-llm-base"></label>
+      <label>LLM 模型<input id="am-llm-model"></label>
+      <label>Embedding API Base<input id="am-embed-base"><small class="muted">DeepSeek 不提供 embedding；默认本机 LM Studio</small></label>
+      <label>Embedding 模型<input id="am-embed-model"></label>
+      <label>Embedding API Key<input id="am-embed-key" type="password" placeholder="本地 LM Studio 默认 lm-studio"></label>
+    </div>
+    <div id="settings-msg" class="settings-msg" hidden></div>
+    <div class="settings-actions"><button id="settings-cancel" class="btn" type="button">取消</button><button id="settings-save" class="btn primary" type="button">保存配置</button></div>
+  </div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

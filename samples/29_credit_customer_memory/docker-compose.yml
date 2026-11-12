@@ -1,73 +1,53 @@
-# 样例 29 本地基础设施：Milvus standalone（图记忆持久化 + 可选向量检索）
-#
+# 样例 29 · Agent Memory 服务 + Java Agent Core 应用
 # 用法：
-#   docker compose up -d
-#   docker compose ps
-#   docker compose down          # 保留数据
-#   docker compose down -v       # 清空数据（会删除 .data/ 中的持久化目录）
-#
-# 端口：Milvus 19530（SDK）/ 9091（健康检查）；MinIO 9000/9001 未映射到宿主机。
-# 数据默认落在本目录 .data/（已 gitignore）。可用 MILVUS_IMAGE 覆盖镜像版本。
-name: openjiuwen-sample29
+#   export LLM_API_KEY=sk-...                         # DeepSeek / OpenAI 兼容
+#   export EMBEDDER_BASE_URL=http://host.docker.internal:1234/v1
+#   docker compose up -d --build
+#   ./scripts/start-agent-memory.sh                   # 打印 Agent Memory Web（Portal）地址
+name: openjiuwen-credit-memory
 
 services:
-  etcd:
-    container_name: ojw29-etcd
-    image: quay.io/coreos/etcd:v3.5.18
+  agent-memory:
+    build:
+      context: ./memory-service
+      dockerfile: Dockerfile
+      args:
+        AGENT_MEMORY_REF: 2a77650c16f8fe073d8713bc91fc703a7233359d
+    container_name: ojw29-agent-memory
     environment:
-      - ETCD_AUTO_COMPACTION_MODE=revision
-      - ETCD_AUTO_COMPACTION_RETENTION=1000
-      - ETCD_QUOTA_BACKEND_BYTES=4294967296
-      - ETCD_SNAPSHOT_COUNT=50000
-    volumes:
-      - ./.data/etcd:/etcd
-    command: etcd -advertise-client-urls=http://etcd:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
-    healthcheck:
-      test: ["CMD", "etcdctl", "endpoint", "health"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
-
-  minio:
-    container_name: ojw29-minio
-    image: minio/minio:RELEASE.2023-03-20T20-16-18Z
-    environment:
-      MINIO_ACCESS_KEY: minioadmin
-      MINIO_SECRET_KEY: minioadmin
-    volumes:
-      - ./.data/minio:/minio_data
-    command: minio server /minio_data --console-address ":9001"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
-
-  milvus:
-    container_name: ojw29-milvus
-    image: ${MILVUS_IMAGE:-milvusdb/milvus:v2.6.0}
-    command: ["milvus", "run", "standalone"]
-    security_opt:
-      - seccomp:unconfined
-    environment:
-      ETCD_ENDPOINTS: etcd:2379
-      MINIO_ADDRESS: minio:9000
-      MINIO_ACCESS_KEY_ID: minioadmin
-      MINIO_SECRET_ACCESS_KEY: minioadmin
-      MILVUS_DB_NAME: default
-    volumes:
-      - ./.data/milvus:/var/lib/milvus
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
-      interval: 30s
-      start_period: 90s
-      timeout: 20s
-      retries: 3
+      LLM_API_KEY: ${LLM_API_KEY:?请先 export LLM_API_KEY}
+      LLM_MODEL: ${LLM_MODEL:-deepseek-chat}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.deepseek.com}
+      EMBEDDER_BASE_URL: ${EMBEDDER_BASE_URL:-http://host.docker.internal:1234/v1}
+      EMBEDDER_MODEL: ${EMBEDDER_MODEL:-text-embedding-nomic-embed-text-v1.5}
+      EMBEDDER_API_KEY: ${EMBEDDER_API_KEY:-lm-studio}
     ports:
-      - "19530:19530"
-      - "9091:9091"
+      - "127.0.0.1:8137:8137"
+    volumes:
+      - ./memory-service/config.yml:/config/config.yml:ro
+      - agent-memory-data:/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8138/healthz').status==200 else 1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped
+
+  # Agent Memory 的 dev auth 只允许绑定 127.0.0.1；容器内用 socat 暴露到共享网络命名空间的 8137。
+  agent-memory-proxy:
+    image: alpine/socat:latest
+    container_name: ojw29-agent-memory-proxy
+    network_mode: "service:agent-memory"
+    command: TCP-LISTEN:8137,fork,reuseaddr TCP:127.0.0.1:8138
     depends_on:
-      etcd:
+      agent-memory:
         condition: service_healthy
-      minio:
-        condition: service_healthy
+    restart: unless-stopped
+
+
+
+volumes:
+  agent-memory-data:

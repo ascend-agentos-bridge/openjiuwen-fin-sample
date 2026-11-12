@@ -64,7 +64,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.5.0</version>
                 <configuration>
-                    <mainClass>com.openjiuwen.samples.creditmemory.CreditMemoryAssistant</mainClass>
+                    <mainClass>com.openjiuwen.samples.creditmemory.AgentMemoryAssistant</mainClass>
                 </configuration>
             </plugin>
         </plugins>

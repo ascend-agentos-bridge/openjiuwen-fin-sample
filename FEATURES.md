@@ -30,7 +30,7 @@ Python 样例 01–19 适配 `openjiuwen==0.1.16`，`25_harness_rsi` 适配 `ope
 | Java Langfuse 对接：官方 OTel handler、OTLP/HTTP、Langfuse 属性映射；本地导出已验收 | [22 java_langfuse](samples/22_java_langfuse/) |
 | Java 自定义工具业务校验、审批中断恢复与异常重试；JUnit 独立验收 | [23 java_tool_rails](samples/23_java_tool_rails/) |
 | Java KV Cache 亲和开关、上下文压缩；普通模型流程验收，昇腾效果未验证 | [24 java_ascend_affinity](samples/24_java_ascend_affinity/) |
-| Java 分层长期记忆（SQLite） + 进程内图记忆 + 向量/KV/图多路召回 + 对话后异步记忆加工 + 双模型配置页面；真实 DeepSeek/Embedding 实测 | [29 credit_customer_memory](samples/29_credit_customer_memory/) |
+| Agent Memory 服务端（REST + Web Portal）+ Java Agent Core ExternalMemoryRail 接入 + 有记忆/无记忆双回答 + 五层记忆 + 偏好/风险/关系召回场景 + 模型配置；真实 DeepSeek/Embedding 实测 | [29 credit_customer_memory](samples/29_credit_customer_memory/) |
 
 | Java AgentHint：信贷复核、多轮缓存生命周期；Java SDK 0.1.17，Python 待实现，兼容服务效果待验收 | [28 credit_review_agent_hint](samples/28_credit_review_agent_hint/) |
 

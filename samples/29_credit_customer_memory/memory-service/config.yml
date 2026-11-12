@@ -1,0 +1,62 @@
+# Agent Memory（openJiuwen/agent-memory）HTTP 服务配置
+# - 默认单容器：SQLite 真源 + 进程内向量/全文/图索引，不依赖 Redis/ES/Milvus
+# - 真实 LLM 抽取/关联/演进：DeepSeek（OpenAI 兼容）
+# - Embedding：LM Studio / 任意 OpenAI 兼容 /v1/embeddings
+# 由 docker-compose 挂载到 /config/config.yml；HTTP Server 读取 memory_api 段。
+profile: credit-memory-demo
+
+memory_api:
+  globals:
+    vector_enabled: true
+    graph_enabled: true
+    rerank_enabled: false
+    embedder_dim: 768
+    chunk_size: 400
+    # 记忆抽取/演进使用真实 LLM；密钥由环境变量注入，不落盘
+    llm_model: ${LLM_MODEL:-deepseek-flash}
+    llm_base_url: ${LLM_BASE_URL:-https://api.deepseek.com}
+    llm_api_key: ${LLM_API_KEY}
+    llm_temperature: 0.0
+    llm_timeout: 120.0
+    extractor_max_attempts: 1
+    # 768 维 nomic embedding；LM Studio 默认 1234；容器内用 host.docker.internal
+    embedder_model: ${EMBEDDER_MODEL:-text-embedding-nomic-embed-text-v1.5}
+    embedder_base_url: ${EMBEDDER_BASE_URL:-http://127.0.0.1:1234/v1}
+    embedder_api_key: ${EMBEDDER_API_KEY:-lm-studio}
+    embedder_max_batch: 8
+  llm:
+    default: { target: openai }
+  embedder:
+    default: { target: openai }
+  reranker:
+    default: { target: overlap }
+  extractor:
+    default:
+      target: llm
+      params: { llm: default }
+  abstractor:
+    default:
+      target: llm
+      params: { llm: default, feature_extractor: default }
+  associator:
+    default:
+      target: llm
+      params: { llm: default, feature_extractor: default, embedder: default }
+  evolver:
+    default:
+      target: orchestrating
+      params:
+        extractor: default
+        abstractor: default
+        associator: default
+        index_builder: default
+        message_store: default
+        dedup: default
+        llm: default
+  kv_store:
+    default:
+      target: sqlite
+      params:
+        db_path: ${MEMORY_DB_PATH:-/data/memory.db}
+  tokenizer:
+    default: { target: jieba }

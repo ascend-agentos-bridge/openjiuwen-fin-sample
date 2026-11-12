@@ -1,225 +1,193 @@
-# 29 · 信贷客户记忆助手（Java 版）
+# 29 · 信贷客户记忆助手（Agent Memory 服务 + MemoryRail 双回答）
 
-> **真实 Java 实现已落地并完成 DeepSeek 实测**。`agent-core-java:0.1.16` + `agent-core-memory-java:0.1.16` 全配对；
-> 长期记忆落本机 SQLite，图记忆按方案 B 使用 `InMemoryGraphStore`；Milvus 等待 memory 0.1.17 发布后切换
-> （`../docker-compose.yml` 已备好）。页面能力对齐 `../prototype/`，但数据全部来自真实 Java 后端和真实模型。
+> **当前实现**：openJiuwen **agent-memory** 作为独立记忆服务端（HTTP + Web Portal），
+> Java Agent Core 用 `ExternalMemoryRail` + 自定义 `MemoryProvider` 接入；每次涉及记忆的回答同时给出
+> **有记忆 / 无记忆基线** 两个真实结果，用来直观证明召回效果。
+> Java 侧仍锁定 `agent-core-java:0.1.16 + agent-core-memory-java:0.1.16`（`MemoryProvider` 是 0.1.16 接口）；
+> Agent Memory 服务使用固定上游 commit `2a77650c16f8fe073d8713bc91fc703a7233359d`。
 
-## 场景
+![双回答：有记忆 vs 无记忆基线](screenshots/agent-memory-dual.png)
 
-客户周砚清与信贷智能体的对话。每轮对话后，应用在后台异步触发两件事：
+![右侧恢复五层记忆：用户画像 / 语义 / 情景 / 摘要 / 变量](screenshots/layered-memory.png)
 
-1. `LongTermMemory.addMessages(..., gen_mem=true)`：用**记忆模型**从最近会话上下文里做 LLM 记忆分析、
-   摘要生成、用户画像/语义/情景记忆抽取与冲突合并，写入本机 SQLite；向量索引在进程内；
-2. `GraphMemory.addMemory(...)`：用**记忆模型**抽取实体/关系/情节，合并去重后写入 `InMemoryGraphStore`。
+![模型设置：对话模型 + Agent Memory 模型两组配置](screenshots/model-settings.png)
 
-下一轮回答前，宿主层把长期记忆（向量 + KV 变量）与图记忆（实体/关系/情节）做多路召回、融合，
-再把融合结果作为上下文交给**对话模型**生成回复。右侧页面展示：长期记忆、图记忆可视化、加工流水线
-（输入上下文 → LLM 提炼 → 产出）、本轮召回来源。
-
-## 版本与限制（必读）
-
-| 项 | 取值 |
-|---|---|
-| Java | 17 |
-| `agent-core-java` | 0.1.16（必须与 memory 0.1.16 成对） |
-| `agent-core-memory-java` | 0.1.16（Maven Central 尚未发布 0.1.17） |
-| 长期记忆存储 | 本机 SQLite `data/credit_memory.db`（KV + 关系表 + 进程内向量索引） |
-| 图记忆存储 | `InMemoryGraphStore`（方案 B；进程重启后图数据丢失，需要重建） |
-| 图关系抽取 | 0.1.16 原始 GraphMemory 有 prompt/parser 字段不一致问题；样例用 `GraphRelationCompatModel` 做临时字段适配，实测关系边已出现。这是兼容层，上游修复后应删除 |
-| Milvus | 未启用；`../docker-compose.yml` 为 0.1.17 后的升级目标 |
-| 模型服务 | 任意 OpenAI 兼容端点（对话 + Embedding）；本机验收使用 LM Studio |
-
-- `memory 0.1.16` 的 `addMessages` / `GraphMemory.addMemory` 是**同步调用**；样例在对话返回后用
-  单线程 executor 异步调用，所以页面表现为「离线加工」。
-- 本地小模型（如 gemma-4-e4b）推理很慢：一轮对话回复约 1–2 分钟，3 次 LLM 的长期记忆抽取约 6 分钟，
-  图抽取还会更久。真实部署请换更快的模型；页面会轮询显示加工进度。
-- 重启后：会话消息（`data/sessions.json`）和长期记忆（SQLite）保留；图记忆在 InMemoryStore，重启后
-  为空，需要从对话重建。向量索引也在进程内，重启后语义检索会退化，样例为保持演示简单未做重建。
-
-## 目录
+## 架构
 
 ```text
-java/
-├── README.md                本文件
-├── API.md                   前后端 JSON 契约
-├── pom.xml                  0.1.16 全配对 + SQLite JDBC + JUnit
-├── config/model.example.json 两组模型配置示例（复制为 model.local.json，gitignored）
-└── src/
-    ├── main/
-    │   ├── java/com/openjiuwen/samples/creditmemory/
-    │   │   ├── CreditMemoryAssistant.java  main：配置、装配、启动 HTTP
-    │   │   ├── config/ModelSettings.java   对话模型 / 记忆模型两组配置
-    │   │   ├── service/ChatService.java    对话模型 + 召回上下文
-    │   │   ├── service/MemoryService.java  LongTermMemory + GraphMemory + 多路召回 + 异步加工
-    │   │   ├── service/Pipeline.java       加工流水线运行态
-    │   │   ├── service/SessionStore.java   会话历史（data/sessions.json）
-    │   │   └── web/WebServer.java          静态页面 + /api/*
-    │   └── resources/web/                  原生 HTML/CSS/JS 页面（无构建）
-    └── test/java/                          规则单测 + @Tag("integration") 真实模型测试
+浏览器
+  │  http://127.0.0.1:8099  （业务页面）
+  ▼
+Java Agent Core（DeepAgent + ExternalMemoryRail） ── MemoryProvider ──HTTP──▶ Agent Memory 服务（8137）
+  │  beforeModelCall: provider.prefetch(query) → <memory-context> 注入          ├─ /v1/search 记忆召回
+  │  afterInvoke:    provider.syncTurn(user, assistant) → /v1/add(infer=true)   ├─ /v1/add    抽取/写入
+  │  两个 Agent：挂 rail / 不挂 rail                                           ├─ /v1/update SUPERSEDE
+  └─ 双回答对比                                                                  ├─ /v1/evolve 演进
+                                                                                └─ /portal    记忆管理 Web
 ```
 
-## 运行
+- **Agent Memory 服务端**：SQLite 真源 + 进程内向量/全文/图索引；真实 LLM（DeepSeek）负责抽取、
+  更新/合并、关联、演进；Embedding 走 OpenAI 兼容端点（本机 LM Studio nomic / 任意服务）。
+- **Java 接入**：`AgentMemoryProvider implements com.openjiuwen.core.memory.external.MemoryProvider`，
+  由 `ExternalMemoryRail` 在模型调用前后驱动；不是绕过框架直接调 API。
+- **双回答**：`DualAnswerRunner` 创建两个同模型、同 prompt 的 `DeepAgent`，一个挂 rail，一个不挂；
+  同一客户问题各答一次，返回两个真实回答 + rail 注入的 `<memory-context>` + 召回命中。
 
-### 1. 准备模型服务
+## 启动
 
-需要两个能力：**对话/记忆抽取的 Chat Completion** 与 **Embedding**。下面以本机 LM Studio 为例：
+### 1. 启动 Agent Memory 服务（本机 Python 3.11）
 
 ```bash
-# LM Studio 加载一个 chat 模型 + 一个 embedding 模型，OpenAI 兼容端点默认 1234
-export API_BASE=http://127.0.0.1:1234/v1
-export API_KEY=lm-studio
-export CHAT_MODEL=google/gemma-4-e4b
-export MEMORY_MODEL=google/gemma-4-e4b
-export EMBED_API_BASE=http://127.0.0.1:1234/v1/embeddings
-export EMBED_MODEL=text-embedding-nomic-embed-text-v1.5
+cd samples/29_credit_customer_memory
+export LLM_API_KEY=sk-...                         # DeepSeek / OpenAI 兼容
+export EMBEDDER_BASE_URL=http://127.0.0.1:1234/v1  # LM Studio / 任意 /v1 embedding
+./scripts/start-agent-memory.sh                   # 首次会 clone + 安装，随后启动并打印 Portal
 ```
 
-也可以用任意远程 OpenAI 兼容服务，例如：
+脚本会打印：
 
-```bash
-export API_BASE=https://api.deepseek.com
-export API_KEY=sk-...
-export CHAT_MODEL=deepseek-chat
-export MEMORY_MODEL=deepseek-chat
-export EMBED_API_BASE=https://api.openai.com/v1/embeddings
-export EMBED_API_KEY=sk-...
-export EMBED_MODEL=text-embedding-3-small
+```text
+Agent Memory API : http://127.0.0.1:8137  ({"status":"ok",...})
+Agent Memory Web : http://127.0.0.1:8137/portal/#access=...
 ```
 
-页面右上角「模型设置」可以分别修改**对话模型**和**记忆模型**（含 Embedding），保存到
-`config/model.local.json`；API Key 只存本机、不提交。也可复制：
-`cp config/model.example.json config/model.local.json` 再编辑。
+**Agent Memory Web Portal** 就是直接查看原始记忆数据的地址。`docker-compose.yml` 另有容器化配置，
+但 upstream 当前 dev auth 强制 loopback 绑定，容器内 Portal 在 macOS 无法对外暴露；本机验证以脚本为准。
 
-### 2. 启动
+### 2. 启动 Java 业务页面
 
 ```bash
 cd samples/29_credit_customer_memory/java
+export CHAT_API_BASE=https://api.deepseek.com
+export CHAT_API_KEY="$LLM_API_KEY"
+export CHAT_MODEL=deepseek-flash
+export AGENT_MEMORY_BASE_URL=http://127.0.0.1:8137
+export AGENT_MEMORY_CUSTOMER=C1001
 mvn -q -DskipTests compile
 mvn -q exec:java
-# 浏览器打开 http://127.0.0.1:8099/
 ```
 
-端口可用 `PORT` 环境变量覆盖。首次启动会创建 `data/credit_memory.db` 和 `data/sessions.json`。
+启动日志会再次打印（两个地址都在启动时可见）：
 
-### 3. 演示脚本（真实抽取 / 召回，不是造数）
-
-**准备**：先按上面的模型配置启动；建议清掉本机运行时数据，从「空记忆」开始观察：
-
-```bash
-rm -rf data/          # 只清本机运行数据，不会删除代码
-mvn -q exec:java
+```text
+Agent Memory API : http://127.0.0.1:8137
+Agent Memory Web : http://127.0.0.1:8137/portal/#access=...
+业务页面         : http://127.0.0.1:8099/
 ```
 
-打开页面后，右侧长期记忆是空的、图记忆是空的。这个空状态很重要：下面的记忆**不是仓库里预置的**。
+- **业务页面**：`http://127.0.0.1:8099/`（左侧服务/会话、中间双回答、右侧记忆工作台）
+- **Agent Memory Portal**：直接看记忆原始数据；也可打开 `http://127.0.0.1:8137/portal/` 按提示重新进入。
+- 只运行真实 probe（无需 UI）：`mvn -q exec:java -Dexec.mainClass=...` 可能被 exec 插件主类覆盖，
+  建议直接用 `AgentMemoryProbe` 的 classpath 命令，见 `AGENT-MEMORY-INTEGRATION.md`。
 
-**三步演示**
+## 模型配置与一键重置
 
-| 步骤 | 运行者输入（原样复制） | 预期记忆/召回变化（语义级） |
+- **默认值已按 DeepSeek 官方填好**：对话模型与 Agent Memory LLM 都是
+  `https://api.deepseek.com` + `deepseek-flash`；API Key 留空，只等你填写。
+  DeepSeek 不提供 Embedding，因此 Embedding 默认仍是本机 LM Studio `text-embedding-nomic-embed-text-v1.5`；
+  若用其他 OpenAI 兼容 embedding，在设置里改 Embedding API Base/模型即可。
+- 页面右上角「模型设置」分两组：
+  - **对话模型**（Java Agent Core）：API Base / 模型 / API Key / 温度；
+  - **Agent Memory 服务模型**：LLM API Base / 模型 / Key，Embedding API Base / 模型 / Key。
+  - 保存后写入本机 `java/config/model.local.json` 与 `memory-service/model.local.env`（均 gitignored）；
+    重启 Java 进程 / Agent Memory 服务后生效。API Key 留空表示沿用已保存值，不会回显。
+- 右上角「清空记忆」一键重置：调用 Agent Memory `DELETE /v1/delete`（selector.mode=`purge`）
+  清空当前客户 scope 的全部记忆与索引，并重开会话，便于反复演示；有二次确认。
+- 模型调用失败时样例会自动重试一次（SSL handshake / 网络抖动），并返回可读错误提示，
+  不再把 DeepAgent 的 invoke 信封直接暴露给用户。若持续失败，打开「模型设置」检查 API Base/Key/模型。
+
+## 演示脚本（页面左下可切换）
+
+页面左下新增**演示脚本下拉框**，内置 4 个脚本，跨会话保留；选择后按步骤点击即可：
+
+| 脚本 | 展示的记忆能力 | 操作方式 |
 |---|---|---|
-| 1 | 「我想申请经营贷。我是周砚清，在杭州经营精密制造公司，想贷80万分36期，偏好等额本息，计划5年内提前结清；2023年有过一次信用卡逾期但已结清，不接受先息后本。」 | 助手直接回应业务，不复述「我记下了」。加工流水线出现；完成后长期记忆出现用户画像/语义/情景/摘要；变量出现 `loanAmount=80万`、`loanTerm=36期`、`plannedYears=5年内`、`repaymentPreference=等额本息，不接受先息后本`；图实体出现周砚清/公司/逾期事件，关系出现「经营」「经历」等；情节出现 1 条。 |
-| 2 | 点「＋」开新会话，输入「我们上次聊到哪了？我的还款方式是什么？」 | 回答前先多路召回；右侧「本轮召回」同时出现**向量 / KV / 图记忆**来源；助手自然概括「80万、36期、等额本息、不接受先息后本」，不会提“记忆库/召回/条目”等内部术语。 |
-| 3 | 「计划改成3年内提前结清，其他不变。」 | 变量 `plannedYears` 从 `5年内` 改为 `3年`；追问本轮再次出现三路召回；图记忆可能新增计划实体/关系，情节增加；加工流水线记录本轮新增。 |
-| 4（可选） | 重启服务后再问同上问题 | 会话与长期记忆仍在 SQLite；向量索引和 `InMemoryGraphStore` 是进程内的，重启后图召回/语义召回会变少。这是方案 B 的已知限制，不是造数或清空记忆。 |
-
-**本次真实运行记录（2026-11-12，DeepSeek + LM Studio Embedding）**
-
-第 1 步实际回复（节选）：
-
-> 周总您好，我是您的信贷顾问。您的情况我大致了解了：杭州精密制造企业，融资80万、36期、等额本息，
-> 计划5年内提前结清，不接受先息后本。先跟您确认几个关键点，方便我判断方案：……
-
-第 1 步加工完成后（`GET /api/sessions/{id}/state` 实测）：
-
-- 长期记忆 8 条：用户画像 4 / 语义 1 / 情景 2 / 摘要 1；
-- 变量 4 个：`80万`、`36期`、`5年内`、`等额本息，不接受先息后本`；
-- 图记忆：实体 3 个（周砚清、杭州精密制造公司、2023年信用卡逾期事件）、关系 2 条、情节 1 条；
-- 流水线最近一次：`llmCalls=4`、`memoriesAdded=12`、图实体 +3、关系 +2、情节 +1。
-
-第 2 步实际回复（节选）：
-
-> 上次咱们聊的是经营贷方案，金额80万、期限36期。还款方式按你的偏好走等额本息，
-> 先息后本那种你不接受，就不考虑了。要不要我接着把等额本息下的月供给你算一下？
-
-第 2 步实际召回：`vector=6 / kv=3 / graph=3`，融合条目包括
-`向量：用户偏好等额本息`、`KV：loanAmount=80万`、`图：周砚清`、`KV：loanTerm=36期` 等；
-加工后长期记忆 9 条、图实体 6 个、关系 4 条、情节 2 条。
-
-第 3 步实际回复（节选）：
-
-> 明白，提前结清时间从5年调整为3年，其他条件不变。按80万、36期等额本息来算，月供大概在2.4万左右；
-> 3年内结清的话，总利息会比原计划少不少。要不要我按3年结清给你做一版更精确的还款测算？
-
-第 3 步实际召回：`vector=7 / kv=3 / graph=3`；变量 `plannedYears` 已变为 `3年`；
-长期记忆 10 条、图实体 7 个、关系 4 条、情节 3 条；本轮流水线 `memoriesAdded=2`、图实体 +1、情节 +1。
-
-> 说明：上述条数是本次真实运行值；换模型、换措辞、重跑都会有小幅波动（LLM 抽取不是固定模板）。
-> **语义判断是稳定的**：金额、期数、还款偏好、结清计划、逾期事件、客户与公司关系会被抽取并跨会话召回。
-
-**怎么验证不是造数**
-
-1. **初始为空**：`rm -rf data/` 后首次打开，长期记忆/图记忆都是空列表；只有真正发消息并等流水线完成后才出现内容。
-2. **代码里没有记忆文案**：
-   ```bash
-   grep -R "用户的名字是周砚清\|loanAmount=80万" src/main/java || echo "没有预置记忆"
-   ```
-   记忆内容是 `LongTermMemory.addMessages(..., gen_mem=true)` 内部调用 LLM 从对话中抽取的，不是 sample 写死的。
-3. **看加工输入/输出**：右侧「加工流程」tab 的「这次加工」里，`输入` 是最近真实对话，`产出` 是对应的长期记忆/图对象；
-   这些字段来自 `MemoryService.process()` 调用 `addMessages` / `addMemory` 之后的结果。
-4. **看 SQLite 落盘**：长期记忆在 `data/credit_memory.db`；可用 SQLite 工具打开看 `memory_meta` 等表，重启服务后内容仍在。
-5. **自动化证据**：`RealModelIntegrationTest` 使用真实模型、临时空目录，断言抽取后长期记忆和实体非空；
-   `mvn test` 规则单测不依赖模型。原型 `prototype/` 是只读 mock，**Java 页面全部走真实 `/api/*`**。
-
-**回答风格**：`ChatService` 的 system prompt 明确要求不要提“我记下了/已记录/已记住/系统已保存”等记忆动作，
-不要复述客户刚提供的全部信息。上面的三步实测回复已不再出现这些句子；若换模型后仍出现，可在「模型设置」换模型
-或加强该 prompt。
-
-## 页面截图（真实 Java 后端 + DeepSeek）
-
-| 截图 | 看什么 |
-|---|---|
-| [longterm.png](screenshots/longterm.png) | 长期记忆 + 多路召回（向量 6 / KV 3 / 图 3） |
-| [graph-tab.png](screenshots/graph-tab.png) | 图记忆实体/关系连线/情节可视化（InMemoryGraphStore） |
-| [pipeline-tab.png](screenshots/pipeline-tab.png) | 加工流水线：stages/stats/输入上下文→产出 |
-| [settings.png](screenshots/settings.png) | 对话模型 + 记忆模型两组配置 |
-
-## 验收
-
-规则单测（不调模型）：
+| ① 跨会话召回（保留） | 长期召回、有/无记忆双回答差异 | 首轮陈述 → 新建会话 → 追问额度/期限/还款方式 |
+| ② 偏好召回 · 个性化推荐 | 客户偏好记忆，让回答按客户约束推荐 | 一键：写入偏好 → 自动追问方案 → 对照双回答 |
+| ③ 风险召回 · 主动提示 | 历史风险事件，让回答主动复用而非重新询问 | 一键：写入逾期已结清 → 自动追问审批注意点 → 对照双回答 |
+| ④ 关系召回 · 免重复询问 | 共同借款人关系，让回答直接复用关系与姓名 | 一键：写入共同借款人 → 自动追问材料 → 对照双回答 |
 
 ```bash
-mvn -q test
+export AGENT_MEMORY_CUSTOMER=demo-$(date +%s)   # 新客户 scope，避免旧记忆干扰
 ```
 
-真实模型集成测试（需要上面的模型服务）：
+| 脚本 | 背景记忆（自动写入示例夹具） | 客户追问 | 预期体验差异 |
+|---|---|---|---|
+| ② 偏好召回 | 客户只接受等额本息，不接受先息后本，因为在意月供压力 | 「结合我的情况，给我推荐一个合适的还款方案，并说明为什么适合我。」 | 有记忆直接按「等额本息」推荐并解释；基线先问金额/期限/现金流，客户要重复偏好 |
+| ③ 风险召回 | 客户 2023 年有一次信用卡逾期，已结清 | 「以我的情况现在申请经营贷，审批时有什么需要特别注意的？」 | 有记忆主动提到「逾期已结清」并给针对性建议；基线只给泛化审批清单 |
+| ④ 关系召回 | 客户太太林岚是共同借款人，也在杭州工作 | 「申请经营贷需要准备哪些共同借款人的材料？」 | 有记忆直接称呼/复用林岚与共同借款人关系；基线要重新确认共同借款人是谁 |
 
-```bash
-mvn -q -Preal-model -Dtest=RealModelIntegrationTest test
+> ②③④ 的背景记忆是**召回场景的示例夹具**，直接写入 Agent Memory（不是演进/纠正逻辑）；
+> 随后的客户追问通过 MemoryRail 真实召回，双回答均由真实模型生成。
+
+**真实运行记录（2026-11-12，DeepSeek + LM Studio Embedding）**：
+
+- 首轮 rail `syncTurn` 真实抽取 4–6 条；跨会话追问 `prefetchCount=5`，有记忆回答准确复述
+  「120万、24期、等额本息、2年内结清」，无记忆基线表示没有完整记录。
+- ② 偏好召回：`prefetchCount=5`；有记忆回答：
+  > 建议走**等额本息**。您明确说过更看重月供压力小、每月还款额固定……先息后本到期要一次性还本，
+  > 不符合您的偏好。
+
+  无记忆基线：
+  > 您方便先说说目前的情况吗？比如贷款金额、期限、经营现金流……
+- ③ 风险召回：`prefetchCount=5`；有记忆回答主动提到「2023 年那次信用卡逾期金额不大、已经结清」，
+  再给征信/流水/用途建议；基线只给通用审批注意点。
+- ④ 关系召回：`prefetchCount=5`；有记忆回答直接说「共同借款人林岚的身份证明、婚姻关系证明……」；
+  基线则先问「共同借款人是谁、需要确认配偶关系」。
+
+**真实运行记录（2026-11-12，DeepSeek + LM Studio Embedding）**：
+
+- 首轮 rail `syncTurn` 真实抽取 4–6 条（例：`林嘉禾在杭州经营一家跨境电商公司，是财务负责人`、
+  `林嘉禾申请120万元经营贷，期限24期，只接受等额本息还款，不接受先息后本，并计划2年内提前结清`）。
+- 跨会话追问 `prefetchCount=5`，`<memory-context>` 注入 5 条；有记忆回答：
+  > 您之前提的是申请120万元经营贷，期限24期，还款方式只接受等额本息，不接受先息后本，
+  > 并计划在2年内提前结清。这个方案目前是可以支持的，提前结清也没问题……
+
+  无记忆基线：
+  > 您上次提到的具体额度、期限和还款方式，我这边暂时没有完整记录……您方便的话可以再把大致需求跟我说一下。
+- 测试：`mvn test` → **32 tests 全绿**（AgentMemoryClient 11 / Provider 12 / 双回答 5 / 原样例 4）；
+  `mvn -DexcludedGroups=none -Dtest=AgentMemoryIntegrationTest test` → **1 test / 21.24s 通过**
+  （真实 DeepSeek + Agent Memory，含 update/evolve 断言）。
+
+![Agent Memory Web Portal：直接查看记忆数据](screenshots/agent-memory-portal.png)
+
+## 记忆高级特性在样例里的对应
+
+| 能力 | Agent Memory 侧 | 样例展示 |
+|---|---|---|
+| 抽取 | `/v1/add` 的 `system_metadata.infer=true` → LLM Extractor | 每轮 rail 写回后生成多条 unit；Portal/右侧列表出现新记忆 |
+| 更新 | `/v1/update` → SUPERSEDE 新版本 | 纠正计划后旧版本 superseded、新版本 active |
+| 合并/升华 | 配置 `abstractor=llm`、`evolver=orchestrating`，`/v1/evolve`（consolidate） | job id + 合并后的高抽象记忆 |
+| 演进 | `evolve` 异步任务 + lifecycle/provenance | 右侧「记忆演进」、Portal 纠正历史 |
+| 遗忘 | `/v1/delete` mode=forget（API 已支持） | 后续可接 UI；原型演示已给出 |
+
+## 关键文件
+
+```text
+memory-service/            Agent Memory 服务配置/Dockerfile/说明（8137）
+scripts/start-agent-memory.sh  启动并打印 Portal Web 地址
+docker-compose.yml         agent-memory + credit-agent 全栈
+java/
+├── Dockerfile
+├── src/main/java/.../agentmemory/
+│   ├── AgentMemoryClient.java       REST 客户端（search/add/list/update/evolve/launchPortal）
+│   ├── AgentMemoryProvider.java     MemoryProvider 实现（prefetch/syncTurn → ExternalMemoryRail）
+│   ├── DualAnswerRunner.java        DeepAgent + ExternalMemoryRail / 无 rail 基线
+│   ├── AgentMemoryProbe.java        真实 probe（非 UI）
+│   └── web/                        双回答业务页面（8099）
+├── src/main/java/.../AgentMemoryAssistant.java  新入口：打印两个地址
+└── AGENT-MEMORY-INTEGRATION.md     MemoryRail 注入点、scope 映射、真实输出、风险
 ```
 
-测试内容：对话模型返回非空；`LongTermMemory` 抽取后长期记忆列表非空；`GraphMemory` 抽取后实体列表非空；
-多路召回可执行。真实运行输出见下节。
+旧的 SQLite + InMemoryGraphStore 实现（`MemoryService` / `CreditMemoryAssistant`）保留为历史参考，
+新入口/新页面全部走 Agent Memory 服务；不要再用旧入口演示。
 
-## 代码要点
+## 限制与注意
 
-- **两组模型配置**：`ModelSettings.chat` 用于回答，`ModelSettings.memory` 用于记忆抽取与 Embedding；
-  `POST /api/settings` 更新后 `ChatService.reload` + `MemoryService.updateSettings` 重建。
-- **记忆初始化**：`LongTermMemory.registerStore(SqliteKVStore, InMemoryVectorStore, DefaultDbStore, APIEmbedding)`
-  + `setConfig(MemoryEngineConfig)` + `setScopeConfig("credit_advisor", MemoryScopeConfig)`。
-- **图记忆**：`GraphConfig(backend=in_memory)` + `GraphMemory`；`GraphMemUpdate` 的 added/updated 实体/关系/情节
-  累积成页面用的图快照；召回走 `GraphMemory.search`。`GraphRelationCompatModel` 临时修关系字段名，
-  效果与风险见上。
-- **多路召回**：`searchUserMem`（向量 + KV 词面兜底）、`searchUserHistorySummary`、`getVariables`、
-  `GraphMemory.search` 各自召回，宿主层按来源交错融合（最多 6 条）。
-- **离线加工**：对话返回后 `executor` 异步跑 LTM + GraphMemory；`Pipeline.Run` 更新阶段/统计/样本供页面轮询。
-- **会话**：`SessionStore` 持久化到 `data/sessions.json`，长期记忆跨会话共享；历史会话只读展示。
-
-## 注意点
-
-- 必须保持 `agent-core-java` 与 `agent-core-memory-java` **同为 0.1.16**；混用 0.1.17 core 会
-  `NoSuchMethodError`（详见 `../research/RESEARCH-MEMORY.md`）。
-- `GraphMemory` 在 0.1.16 只有 `InMemoryGraphStore`，Milvus 后端不存在；方案 B 下重启会丢图数据。
-- 0.1.16 图关系抽取有已知 prompt/parser 字段不匹配；样例用 `GraphRelationCompatModel` 临时适配，
-  不应把该适配器当成框架能力。上游修复后请删除。
-- 向量索引 `InMemoryVectorStore` 不持久化，重启后语义搜索会变弱；长期记忆原文仍在 SQLite。
-- 本地推理模型输出可能带 `reasoning_content`；本项目把 maxTokens 设为 2048，若仍为空请换模型或调大。
-- 不要提交 `config/model.local.json`、`data/`、`logs/`、`target/`。
+- **dev auth**：本机 Agent Memory 以 `--auth-mode dev` 运行，固定 `local/developer` 身份；客户维度按
+  官方适配器方式映射到 `session` 轴（`AGENT_MEMORY_USER` 可切换生产身份）。不得暴露到共享网络/生产。
+- **Portal token 一次性**：启动时 `POST /portal/api/launch` 取得；重启 Java 或刷新 token 后重新获取。
+- **SQLite + 进程内索引**：默认单容器，无 Redis/ES/Milvus 依赖；重启后 SQLite 记忆仍在，进程内索引会重建/丢失部分召回。
+- **DeepAgent 0.1.16 坑**：`enableTaskLoop(false)` 时 `DeepAgent.invoke` 只返回信封、不执行模型；样例固定
+  `enableTaskLoop(true)` + `Runner.runAgent`，升级 0.1.17 需复核。
+- **真实 LLM 有波动**：抽取条数、关系、回答措辞会变；演示判断以语义为准，不以逐字/固定条数断言。
