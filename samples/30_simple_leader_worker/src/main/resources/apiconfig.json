@@ -1,0 +1,7 @@
+{
+  "API_BASE": "http://127.0.0.1:8000/v1",
+  "API_KEY_ENV": "DEEPSEEK_API_KEY_OPENJIUWEN",
+  "MODEL_PROVIDER": "DeepSeek",
+  "MODEL_NAME": "deepseek-flash",
+  "LLM_SSL_VERIFY": "true"
+}
